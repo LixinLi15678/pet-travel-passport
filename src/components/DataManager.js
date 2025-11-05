@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import dataService from '../services/dataService';
+import fileUploadService from '../services/fileUploadService';
 import FileUpload from './FileUpload';
 import './DataManager.css';
 
@@ -99,6 +100,13 @@ const DataManager = ({ user }) => {
       return;
     }
 
+    const petToDelete = pets[index];
+    if (!petToDelete) {
+      return;
+    }
+
+    const filesToDelete = Array.isArray(petToDelete.files) ? petToDelete.files : [];
+
     const updatedPets = pets.filter((_, i) => i !== index);
 
     try {
@@ -107,6 +115,13 @@ const DataManager = ({ user }) => {
         setPets(updatedPets);
         if (editingId === index) {
           handleClear();
+        }
+        if (filesToDelete.length > 0) {
+          try {
+            await fileUploadService.deleteFiles(filesToDelete, user.uid);
+          } catch (error) {
+            console.error('Error deleting files for pet:', error);
+          }
         }
         alert('Deleted successfully!');
       }
