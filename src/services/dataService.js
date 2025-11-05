@@ -1,12 +1,7 @@
 import {
-  collection,
   doc,
   setDoc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  serverTimestamp
+  getDoc
 } from 'firebase/firestore';
 import { db, firebaseAvailable } from '../firebase/config';
 
@@ -217,4 +212,6 @@ class DataService {
   }
 }
 
-export default new DataService();
+const dataService = new DataService();
+
+export default dataService;

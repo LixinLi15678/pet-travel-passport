@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db, firebaseAvailable } from '../firebase/config';
 
 /**
@@ -264,4 +264,6 @@ class FileUploadService {
   }
 }
 
-export default new FileUploadService();
+const fileUploadService = new FileUploadService();
+
+export default fileUploadService;

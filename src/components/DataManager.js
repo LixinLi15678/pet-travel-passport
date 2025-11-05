@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import dataService from '../services/dataService';
@@ -18,24 +18,25 @@ const DataManager = ({ user }) => {
   const [editingId, setEditingId] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    loadAllPets();
-  }, [user]);
-
-  const loadAllPets = async () => {
+  const loadAllPets = useCallback(async () => {
+    if (!user?.uid) {
+      setPets([]);
+      return;
+    }
     setLoading(true);
     try {
       const data = await dataService.loadUserData(user.uid);
-      if (data && data.pets) {
-        setPets(data.pets);
-      }
+      setPets(data?.pets || []);
     } catch (error) {
       console.error('Error loading pets:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadAllPets();
+  }, [loadAllPets]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
