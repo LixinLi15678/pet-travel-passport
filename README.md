@@ -1,4 +1,7 @@
 # Pet Travel Passport
+[![Deploy to GitHub Pages](https://github.com/LixinLi15678/pet-travel-passport/actions/workflows/deploy.yml/badge.svg)](https://github.com/LixinLi15678/pet-travel-passport/actions/workflows/deploy.yml)
+[![Security Audit](https://github.com/LixinLi15678/pet-travel-passport/actions/workflows/security-check.yml/badge.svg)](https://github.com/LixinLi15678/pet-travel-passport/actions/workflows/security-check.yml)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2FLixinLi15678.github.io%2Fpet-travel-passport)](https://LixinLi15678.github.io/pet-travel-passport)
 
 A mobile-friendly web application for pet travel passport generation.
 
