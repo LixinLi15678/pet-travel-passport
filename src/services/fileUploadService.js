@@ -113,7 +113,7 @@ class FileUploadService {
     console.log('Re-uploading files, existing count:', existingFiles.length);
 
     // Delete old files
-    await this._deleteFiles(existingFiles, userId);
+    await this.deleteFiles(existingFiles, userId);
 
     // Upload new files
     const newFileInfos = await this.uploadFiles(newFiles, userId, category);
@@ -128,7 +128,7 @@ class FileUploadService {
    * @param {string} userId - User ID
    * @returns {Promise<void>}
    */
-  async _deleteFiles(fileInfos, userId) {
+  async deleteFiles(fileInfos, userId) {
     const deletePromises = fileInfos.map(async (info) => {
       try {
         if (this.useFirebase && info.source === 'firestore') {
