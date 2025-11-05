@@ -542,7 +542,7 @@ const FileUpload = ({ userId, category = 'general', onUploadComplete, existingFi
                   >
                     <img
                       src={photo.previewUrl}
-                      alt={`Selected photo ${index + 1}`}
+                      alt={`Selected ${index + 1}`}
                       className="photo-thumb"
                     />
                     <div className="photo-card-actions">
@@ -608,7 +608,7 @@ const FileUpload = ({ userId, category = 'general', onUploadComplete, existingFi
                     >
                       <img
                         src={photoSrc}
-                        alt={file.name || `Photo ${index + 1}`}
+                        alt={file.name || `Upload ${index + 1}`}
                         className="photo-thumb"
                       />
                       <div className="photo-card-actions">
@@ -742,7 +742,7 @@ const FileUpload = ({ userId, category = 'general', onUploadComplete, existingFi
             {cameraPreview ? (
               <img
                 src={cameraPreview.previewUrl}
-                alt="Captured preview"
+                alt="Captured"
                 className="camera-preview-image"
               />
             ) : (
