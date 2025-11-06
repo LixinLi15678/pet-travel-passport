@@ -19,6 +19,7 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
   const [editingId, setEditingId] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [showAccountPopup, setShowAccountPopup] = useState(false);
+  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
   const [loading, setLoading] = useState(false);
   const loadAllPets = useCallback(async () => {
     if (!user?.uid) {
@@ -168,7 +169,7 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
                 className="account-icon-button"
                 onClick={() => setShowAccountPopup(!showAccountPopup)}
               >
-                <img src="/assets/icons/cat-login.svg" alt="Account" className="account-icon" />
+                <img src={accountIconSrc} alt="Account" className="account-icon" />
               </button>
               {showAccountPopup && (
                 <div

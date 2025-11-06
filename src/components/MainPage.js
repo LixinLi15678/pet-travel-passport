@@ -7,6 +7,8 @@ import './MainPage.css';
 const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTip }) => {
   const [showAccountPopup, setShowAccountPopup] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
+  const welcomeCatSrc = `${process.env.PUBLIC_URL}/assets/icons/icons8-cat-100.png`;
   return (
     <div className="welcome-container">
       <div className="fixed-header-section">
@@ -23,7 +25,7 @@ const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTi
                   className="account-icon-button"
                   onClick={() => setShowAccountPopup(!showAccountPopup)}
                 >
-                  <img src="/assets/icons/cat-login.svg" alt="Account" className="account-icon" />
+                  <img src={accountIconSrc} alt="Account" className="account-icon" />
                 </button>
                 {showAccountPopup && (
                   <div
@@ -125,7 +127,7 @@ const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTi
           {/* Cat Icon */}
           <div className="cat-icon">
             <img
-              src="/assets/icons/icons8-cat-100.png"
+              src={welcomeCatSrc}
               alt="Cat"
               className="cat-image"
             />
