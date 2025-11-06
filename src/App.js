@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './firebase/config';
 import Auth from './components/Auth';
-import DataManager from './components/DataManager';
 import MainPage from './components/MainPage';
+import Vaccine from './components/Vaccine';
 import './App.css';
 
 /**
@@ -16,9 +16,8 @@ import './App.css';
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState('main'); // 'main' or 'data-manager'
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [showLoginTip, setShowLoginTip] = useState(false);
+  const [currentPage, setCurrentPage] = useState('main'); // 'main' or 'vaccine'
 
   useEffect(() => {
     // Listen to authentication state changes
@@ -44,26 +43,11 @@ function App() {
 
   const handleAuthSuccess = (authenticatedUser) => {
     setUser(authenticatedUser);
-    setCurrentPage('main');
     // Check if user wants to see login tip
     const dontShowAgain = localStorage.getItem('dontShowLoginTip');
     if (!dontShowAgain) {
       setShowLoginTip(true);
     }
-  };
-
-  const handleBeginSetup = () => {
-    setCurrentPage('data-manager');
-    setShowDisclaimer(true);
-  };
-
-  const handleBackToMainPage = () => {
-    setCurrentPage('main');
-    setShowDisclaimer(false);
-  };
-
-  const handleDismissDisclaimer = () => {
-    setShowDisclaimer(false);
   };
 
   const handleDismissLoginTip = (dontShowAgain) => {
@@ -73,11 +57,25 @@ function App() {
     }
   };
 
+  const handleBeginSetup = () => {
+    setCurrentPage('vaccine');
+  };
+
+  const handleBackToMain = () => {
+    setCurrentPage('main');
+  };
+
+  const handleVaccineNext = (data) => {
+    console.log('Vaccine data:', data);
+    // TODO: Navigate to next page (DONE/Review)
+    alert('Vaccine upload complete! Next page coming soon...');
+  };
+
   const handleLogout = async () => {
     if (window.confirm('Are you sure you want to logout?')) {
       try {
         await signOut(auth);
-        setCurrentPage('auth');
+        setCurrentPage('main');
       } catch (error) {
         console.error('Logout error:', error);
       }
@@ -93,8 +91,8 @@ function App() {
     );
   }
 
-  // Show auth page if currentPage is 'auth' or user is not logged in
-  if (currentPage === 'auth' || !user) {
+  // Show auth page if user is not logged in
+  if (!user) {
     return (
       <div className="App">
         <Auth onAuthSuccess={handleAuthSuccess} />
@@ -102,23 +100,23 @@ function App() {
     );
   }
 
-  // Logged in - show main page or data manager
+  // Logged in - show appropriate page
   return (
     <div className="App">
       {currentPage === 'main' ? (
         <MainPage
-          onBeginSetup={handleBeginSetup}
           user={user}
           onLogout={handleLogout}
           showLoginTip={showLoginTip}
           onDismissLoginTip={handleDismissLoginTip}
+          onBeginSetup={handleBeginSetup}
         />
       ) : (
-        <DataManager
+        <Vaccine
           user={user}
-          onBackToMain={handleBackToMainPage}
-          showDisclaimer={showDisclaimer}
-          onDismissDisclaimer={handleDismissDisclaimer}
+          onNext={handleVaccineNext}
+          onBack={handleBackToMain}
+          onLogout={handleLogout}
         />
       )}
     </div>

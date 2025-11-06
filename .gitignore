@@ -25,10 +25,6 @@ node_modules/
 # gh-pages deployment files (but keep .nojekyll)
 !.nojekyll
 
-old/
-func.md
-.cla*
-
 ##### Linux
 *~
 
@@ -287,3 +283,9 @@ _deps
 *.su
 *.idb
 *.pdb
+
+# Other Files
+old/
+func.md
+.cla*
+HISTORY.md

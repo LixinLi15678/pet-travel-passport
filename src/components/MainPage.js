@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
+import './shared.css';
 import './MainPage.css';
 
 /**
  * Main Page - First page of Pet Travel Passport
  */
-const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTip }) => {
+const MainPage = ({ user, onLogout, showLoginTip, onDismissLoginTip, onBeginSetup }) => {
   const [showAccountPopup, setShowAccountPopup] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
   const welcomeCatSrc = `${process.env.PUBLIC_URL}/assets/icons/icons8-cat-100.png`;
   return (
-    <div className="welcome-container">
-      <div className="fixed-header-section">
+    <div className="page-background">
+      <div className="page-header">
         {/* Header Section */}
-        <header className="welcome-header">
-          <div className="header-title-row">
-            <div>
-              <h1 className="welcome-title">Pet Travel Passport</h1>
-              <p className="welcome-subtitle">Verified check-in in 4 steps</p>
-            </div>
+        <div className="header-content">
+          <div className="header-title-section">
+            <h1 className="page-title">Pet Travel Passport</h1>
+            <p className="page-subtitle">Verified check-in in 4 steps</p>
+          </div>
             {user && (
               <div className="login-status">
                 <button
@@ -51,38 +51,36 @@ const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTi
                 )}
               </div>
             )}
-          </div>
-        </header>
+        </div>
 
-        {/* Divider Line under Header */}
         <div className="header-divider" />
 
         {/* Step Indicator - Status Bar */}
-        <div className="step-indicator">
+        <div className="progress-section">
           <div className="step-divider" />
 
-          <div className="step-item">
+          <div className="progress-step">
             <div className="step-circle">
               <span className="step-number">1</span>
             </div>
             <div className="step-label">MEASURE</div>
           </div>
 
-          <div className="step-item">
+          <div className="progress-step">
             <div className="step-circle">
               <span className="step-number">2</span>
             </div>
             <div className="step-label">WEIGH</div>
           </div>
 
-          <div className="step-item">
+          <div className="progress-step">
             <div className="step-circle">
               <span className="step-number">3</span>
             </div>
             <div className="step-label">VACCINE</div>
           </div>
 
-          <div className="step-item">
+          <div className="progress-step">
             <div className="step-circle">
               <span className="step-number">4</span>
             </div>
@@ -90,7 +88,6 @@ const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTi
           </div>
         </div>
 
-        {/* Divider Line under Status Bar */}
         <div className="statusbar-divider" />
       </div>
 
@@ -122,8 +119,8 @@ const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTi
       )}
 
       {/* Scrollable Main Content Section */}
-      <main className="welcome-main">
-        <div className="hero-card">
+      <main className="page-main">
+        <div className="content-card hero-card">
           {/* Cat Icon */}
           <div className="cat-icon">
             <img
@@ -168,11 +165,8 @@ const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTi
           </div>
         </div>
 
-        {/* Begin Button at Bottom */}
-        <button
-          className="begin-button"
-          onClick={onBeginSetup}
-        >
+        {/* Begin Button */}
+        <button className="primary-button begin-button" onClick={onBeginSetup}>
           Begin Setup
         </button>
 
