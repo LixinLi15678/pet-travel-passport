@@ -508,7 +508,7 @@ const FileUpload = ({ userId, category = 'general', onUploadComplete, existingFi
               className="action-button camera-button"
               type="button"
             >
-              📷 Take Photos
+              Take Photos
             </button>
 
             <div className="file-input-wrapper">
@@ -522,7 +522,7 @@ const FileUpload = ({ userId, category = 'general', onUploadComplete, existingFi
                 id={imageInputId}
               />
               <label htmlFor={imageInputId} className="action-button image-button">
-                🖼️ Upload Images
+                Upload Images
               </label>
             </div>
           </div>
@@ -651,7 +651,7 @@ const FileUpload = ({ userId, category = 'general', onUploadComplete, existingFi
                 id={documentInputId}
               />
               <label htmlFor={documentInputId} className="action-button file-button">
-                📄 Upload Files
+                Upload Files
               </label>
             </div>
           </div>
