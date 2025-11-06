@@ -7,9 +7,9 @@ import FileUpload from './FileUpload';
 import './DataManager.css';
 
 /**
- * Data Manager Component - View, Add, Edit, Delete user data
+ * Data Manager Component - View, Add, Edit, Delete
  */
-const DataManager = ({ user }) => {
+const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }) => {
   const [pets, setPets] = useState([]);
   const [currentPet, setCurrentPet] = useState({
     name: '',
@@ -18,6 +18,7 @@ const DataManager = ({ user }) => {
   });
   const [editingId, setEditingId] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [showAccountPopup, setShowAccountPopup] = useState(false);
   const [loading, setLoading] = useState(false);
   const loadAllPets = useCallback(async () => {
     if (!user?.uid) {
@@ -153,18 +154,113 @@ const DataManager = ({ user }) => {
 
   return (
     <div className="data-manager">
-      <header className="manager-header">
-        <div className="header-content">
-          <h1>Pet Travel Passport</h1>
-          <div className="user-info">
-            <span className="user-email">{user.email}</span>
-            <button onClick={handleLogout} className="logout-button">
-              Logout
+      {/* Fixed Header and Status Bar Section - matching MainPage style */}
+      <div className="fixed-header-section">
+        {/* Header Section */}
+        <header className="manager-header">
+          <div className="header-title-row">
+            <div>
+              <h1 className="manager-title">Pet Travel Passport</h1>
+              <p className="manager-subtitle">Data Management & Testing Interface</p>
+            </div>
+            <div className="login-status">
+              <button
+                className="account-icon-button"
+                onClick={() => setShowAccountPopup(!showAccountPopup)}
+              >
+                <img src="/assets/icons/cat-login.svg" alt="Account" className="account-icon" />
+              </button>
+              {showAccountPopup && (
+                <div
+                  className="account-popup"
+                  onClick={() => setShowAccountPopup(false)}
+                >
+                  <div
+                    className="account-popup-content"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <p className="account-email">{user.email}</p>
+                    <button
+                      className="popup-logout-button"
+                      onClick={() => {
+                        setShowAccountPopup(false);
+                        handleLogout();
+                      }}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Divider Line under Header */}
+        <div className="header-divider" />
+
+        {/* Status Bar - Team Members */}
+        <div className="status-indicator">
+          <div className="status-divider" />
+
+          <div className="status-item">
+            <div className="status-circle">
+              <span className="status-text">PTP</span>
+            </div>
+            <div className="status-label">PROJECT</div>
+          </div>
+
+          <div className="status-item">
+            <div className="status-circle">
+              <span className="status-text">LL</span>
+            </div>
+            <div className="status-label">Lixin Li</div>
+          </div>
+
+          <div className="status-item">
+            <div className="status-circle">
+              <span className="status-text">KW</span>
+            </div>
+            <div className="status-label">Kai Wang</div>
+          </div>
+
+          <div className="status-item">
+            <div className="status-circle">
+              <span className="status-text">ZL</span>
+            </div>
+            <div className="status-label">Ziyi Li</div>
+          </div>
+        </div>
+
+        {/* Divider Line under Status Bar */}
+        <div className="statusbar-divider" />
+      </div>
+
+      {/* Disclaimer Modal */}
+      {showDisclaimer && (
+        <div className="disclaimer-overlay">
+          <div className="disclaimer-modal">
+            <h2>Testing Interface Notice</h2>
+            <p>
+              This interface is designed for testing authentication, file upload, and Firebase integration.
+              It is <strong>NOT</strong> the actual application interface.
+            </p>
+            <p>
+              The features demonstrated here include:
+            </p>
+            <ul>
+              <li>Firebase Authentication (Email/Password)</li>
+              <li>Firestore Database Operations (CRUD)</li>
+              <li>Firebase Storage (File Upload/Download)</li>
+            </ul>
+            <button onClick={onDismissDisclaimer} className="dismiss-button">
+              I Understand
             </button>
           </div>
         </div>
-      </header>
+      )}
 
+      {/* Scrollable Main Content Section */}
       <main className="manager-main">
         {/* Add/Edit Form */}
         <section className="edit-section">
@@ -278,6 +374,11 @@ const DataManager = ({ user }) => {
             </div>
           )}
         </section>
+
+        {/* Back Button at Bottom */}
+        <button onClick={onBackToMain} className="back-to-main-button">
+          To First Page
+        </button>
       </main>
     </div>
   );
