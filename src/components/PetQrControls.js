@@ -15,15 +15,6 @@ const PetQrControls = ({ pets, userEmail, dbRegion = "nam5" }) => {
   const [qrPayload, setQrPayload] = useState("");
   const qrCanvasRef = useRef(null);
 
-  const options = useMemo(
-    () =>
-      (pets || []).map((p, i) => ({
-        label: p?.name ? `${p.name} (${p.species || "pet"})` : `Pet ${i + 1}`,
-        value: i,
-      })),
-    [pets]
-  );
-
   const buildQrPayload = (pet) => {
     const files = Array.isArray(pet.files)
       ? pet.files.map((f) => ({
