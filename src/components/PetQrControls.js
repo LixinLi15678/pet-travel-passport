@@ -87,9 +87,9 @@ const PetQrControls = ({ pets, userEmail, dbRegion = "nam5" }) => {
           title="Choose a pet"
         >
           <option value="">Select pet</option>
-          {pets?.map((p, i) => (
-            <option key={i} value={i}>
-              {p?.name ? `${p.name} (${p.species || "pet"})` : `Pet ${i + 1}`}
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
             </option>
           ))}
         </select>
