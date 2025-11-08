@@ -287,3 +287,5 @@ _deps
 *.su
 *.idb
 *.pdb
+
+HISTORY.md
