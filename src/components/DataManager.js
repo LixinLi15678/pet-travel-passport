@@ -1,20 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { signOut } from 'firebase/auth';
-import { auth } from '../firebase/config';
-import dataService from '../services/dataService';
-import fileUploadService from '../services/fileUploadService';
-import FileUpload from './FileUpload';
-import './DataManager.css';
+import React, { useState, useEffect, useCallback } from "react";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase/config";
+import dataService from "../services/dataService";
+import fileUploadService from "../services/fileUploadService";
+import FileUpload from "./FileUpload";
+import "./DataManager.css";
+import PetQrControls from "./PetQrControls";
 
 /**
  * Data Manager Component - View, Add, Edit, Delete
  */
-const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }) => {
+const DataManager = ({
+  user,
+  onBackToMain,
+  showDisclaimer,
+  onDismissDisclaimer,
+}) => {
   const [pets, setPets] = useState([]);
   const [currentPet, setCurrentPet] = useState({
-    name: '',
-    species: '',
-    weight: ''
+    name: "",
+    species: "",
+    weight: "",
   });
   const [editingId, setEditingId] = useState(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -31,7 +37,7 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
       const data = await dataService.loadUserData(user.uid);
       setPets(data?.pets || []);
     } catch (error) {
-      console.error('Error loading pets:', error);
+      console.error("Error loading pets:", error);
     } finally {
       setLoading(false);
     }
@@ -43,22 +49,22 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setCurrentPet(prev => ({
+    setCurrentPet((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleAddOrUpdate = async () => {
     if (!currentPet.name || !currentPet.species || !currentPet.weight) {
-      alert('Please fill in all fields');
+      alert("Please fill in all fields");
       return;
     }
 
     const petData = {
       ...currentPet,
       files: uploadedFiles,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     let updatedPets;
@@ -73,15 +79,19 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
     }
 
     try {
-      const success = await dataService.saveUserData(user.uid, { pets: updatedPets });
+      const success = await dataService.saveUserData(user.uid, {
+        pets: updatedPets,
+      });
       if (success) {
         setPets(updatedPets);
         handleClear();
-        alert(editingId !== null ? 'Updated successfully!' : 'Added successfully!');
+        alert(
+          editingId !== null ? "Updated successfully!" : "Added successfully!"
+        );
       }
     } catch (error) {
-      console.error('Save error:', error);
-      alert('Save failed');
+      console.error("Save error:", error);
+      alert("Save failed");
     }
   };
 
@@ -90,15 +100,15 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
     setCurrentPet({
       name: pet.name,
       species: pet.species,
-      weight: pet.weight
+      weight: pet.weight,
     });
     setUploadedFiles(pet.files || []);
     setEditingId(index);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (index) => {
-    if (!window.confirm('Are you sure you want to delete this record?')) {
+    if (!window.confirm("Are you sure you want to delete this record?")) {
       return;
     }
 
@@ -107,12 +117,16 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
       return;
     }
 
-    const filesToDelete = Array.isArray(petToDelete.files) ? petToDelete.files : [];
+    const filesToDelete = Array.isArray(petToDelete.files)
+      ? petToDelete.files
+      : [];
 
     const updatedPets = pets.filter((_, i) => i !== index);
 
     try {
-      const success = await dataService.saveUserData(user.uid, { pets: updatedPets });
+      const success = await dataService.saveUserData(user.uid, {
+        pets: updatedPets,
+      });
       if (success) {
         setPets(updatedPets);
         if (editingId === index) {
@@ -122,29 +136,29 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
           try {
             await fileUploadService.deleteFiles(filesToDelete, user.uid);
           } catch (error) {
-            console.error('Error deleting files for pet:', error);
+            console.error("Error deleting files for pet:", error);
           }
         }
-        alert('Deleted successfully!');
+        alert("Deleted successfully!");
       }
     } catch (error) {
-      console.error('Delete error:', error);
-      alert('Delete failed');
+      console.error("Delete error:", error);
+      alert("Delete failed");
     }
   };
 
   const handleClear = () => {
-    setCurrentPet({ name: '', species: '', weight: '' });
+    setCurrentPet({ name: "", species: "", weight: "" });
     setUploadedFiles([]);
     setEditingId(null);
   };
 
   const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+    if (window.confirm("Are you sure you want to logout?")) {
       try {
         await signOut(auth);
       } catch (error) {
-        console.error('Logout error:', error);
+        console.error("Logout error:", error);
       }
     }
   };
@@ -162,14 +176,20 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
           <div className="header-title-row">
             <div>
               <h1 className="manager-title">Pet Travel Passport</h1>
-              <p className="manager-subtitle">Data Management & Testing Interface</p>
+              <p className="manager-subtitle">
+                Data Management & Testing Interface
+              </p>
             </div>
             <div className="login-status">
               <button
                 className="account-icon-button"
                 onClick={() => setShowAccountPopup(!showAccountPopup)}
               >
-                <img src={accountIconSrc} alt="Account" className="account-icon" />
+                <img
+                  src={accountIconSrc}
+                  alt="Account"
+                  className="account-icon"
+                />
               </button>
               {showAccountPopup && (
                 <div
@@ -243,12 +263,11 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
           <div className="disclaimer-modal">
             <h2>Testing Interface Notice</h2>
             <p>
-              This interface is designed for testing authentication, file upload, and Firebase integration.
-              It is <strong>NOT</strong> the actual application interface.
+              This interface is designed for testing authentication, file
+              upload, and Firebase integration. It is <strong>NOT</strong> the
+              actual application interface.
             </p>
-            <p>
-              The features demonstrated here include:
-            </p>
+            <p>The features demonstrated here include:</p>
             <ul>
               <li>Firebase Authentication (Email/Password)</li>
               <li>Firestore Database Operations (CRUD)</li>
@@ -265,7 +284,7 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
       <main className="manager-main">
         {/* Add/Edit Form */}
         <section className="edit-section">
-          <h2>{editingId !== null ? 'Edit Pet Information' : 'Add New Pet'}</h2>
+          <h2>{editingId !== null ? "Edit Pet Information" : "Add New Pet"}</h2>
 
           <div className="form-container">
             <div className="form-row">
@@ -315,7 +334,7 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
 
             <div className="button-group">
               <button onClick={handleAddOrUpdate} className="save-button">
-                {editingId !== null ? 'Update Information' : 'Add Pet'}
+                {editingId !== null ? "Update Information" : "Add Pet"}
               </button>
               {editingId !== null && (
                 <button onClick={handleClear} className="cancel-button">
@@ -347,12 +366,16 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
                   </div>
 
                   <div className="pet-details">
-                    <p><strong>Weight:</strong> {pet.weight} lbs</p>
+                    <p>
+                      <strong>Weight:</strong> {pet.weight} lbs
+                    </p>
                     {pet.files && pet.files.length > 0 && (
-                      <p><strong>Files:</strong> {pet.files.length}</p>
+                      <p>
+                        <strong>Files:</strong> {pet.files.length}
+                      </p>
                     )}
                     <p className="pet-time">
-                      Updated: {new Date(pet.updatedAt).toLocaleString('en-US')}
+                      Updated: {new Date(pet.updatedAt).toLocaleString("en-US")}
                     </p>
                   </div>
 
@@ -376,10 +399,13 @@ const DataManager = ({ user, onBackToMain, showDisclaimer, onDismissDisclaimer }
           )}
         </section>
 
-        {/* Back Button at Bottom */}
-        <button onClick={onBackToMain} className="back-to-main-button">
-          To First Page
-        </button>
+        <div className="bottom-row">
+          <button onClick={onBackToMain} className="back-to-main-button">
+            To First Page
+          </button>
+
+          <PetQrControls pets={pets} userEmail={user?.email} dbRegion="nam5" />
+        </div>
       </main>
     </div>
   );

@@ -3,7 +3,7 @@
 .data-manager {
   min-height: 100vh;
   height: 100vh;
-  background: #F8F9FA;
+  background: #f8f9fa;
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -13,7 +13,7 @@
 
 /* Fixed Header and Status Bar Section - Does not scroll */
 .fixed-header-section {
-  background: #FFFFFF;
+  background: #ffffff;
   flex-shrink: 0;
   position: relative;
   z-index: 10;
@@ -21,7 +21,7 @@
 
 /* Header Section - Matching MainPage */
 .manager-header {
-  background: #FFFFFF;
+  background: #ffffff;
   padding: 42px 28px 16px 28px;
   text-align: left;
 }
@@ -46,7 +46,7 @@
   margin: 0;
   font-size: 14px;
   font-weight: 400;
-  color: #6B7280;
+  color: #6b7280;
   line-height: 1.4;
   letter-spacing: -0.56px;
 }
@@ -89,7 +89,7 @@
 }
 
 .account-popup-content {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 10px;
   padding: 12px;
   min-width: 160px;
@@ -117,14 +117,14 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 200ms ease-in-out;
-  background: #FFFFFF;
-  color: #6B7280;
-  border: 2px solid #E6E7EB;
+  background: #ffffff;
+  color: #6b7280;
+  border: 2px solid #e6e7eb;
 }
 
 .popup-logout-button:hover {
-  border-color: #FF6B9D;
-  color: #FF6B9D;
+  border-color: #ff6b9d;
+  color: #ff6b9d;
 }
 
 .popup-logout-button:active {
@@ -135,14 +135,14 @@
 .header-divider {
   width: 100%;
   height: 2px;
-  background: #E6E7EB;
+  background: #e6e7eb;
   flex-shrink: 0;
 }
 
 .statusbar-divider {
   width: 100%;
   height: 2px;
-  background: #E6E7EB;
+  background: #e6e7eb;
   flex-shrink: 0;
 }
 
@@ -153,7 +153,7 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 22px 28px 18px 28px;
-  background: #FFFFFF;
+  background: #ffffff;
   flex-shrink: 0;
 }
 
@@ -163,7 +163,7 @@
   left: calc(28px + 23.5px);
   right: calc(28px + 23.5px);
   height: 2px;
-  background: #E6E7EB;
+  background: #e6e7eb;
   z-index: 0;
 }
 
@@ -181,8 +181,8 @@
   width: 47px;
   height: 47px;
   border-radius: 50%;
-  border: 2px solid #E6E7EB;
-  background: #FFFFFF;
+  border: 2px solid #e6e7eb;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -193,14 +193,14 @@
 .status-text {
   font-size: 12px;
   font-weight: 700;
-  color: #E6E7EB;
+  color: #e6e7eb;
   letter-spacing: -0.5px;
 }
 
 .status-label {
   font-size: 11px;
   font-weight: 700;
-  color: #6B7280;
+  color: #6b7280;
   text-align: center;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -208,18 +208,18 @@
 
 /* User Info Bar */
 .user-info-bar {
-  background: #FFFFFF;
+  background: #ffffff;
   padding: 12px 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #F8F9FA;
+  border-top: 1px solid #f8f9fa;
 }
 
 .user-email {
   font-size: 14px;
   font-weight: 500;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .nav-buttons {
@@ -239,8 +239,8 @@
 }
 
 .back-button {
-  background: linear-gradient(135deg, #FF6B9D 0%, #E63E6F 100%);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, #ff6b9d 0%, #e63e6f 100%);
+  color: #ffffff;
   box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
 }
 
@@ -251,14 +251,14 @@
 }
 
 .logout-button {
-  background: #FFFFFF;
-  color: #6B7280;
-  border: 2px solid #E6E7EB;
+  background: #ffffff;
+  color: #6b7280;
+  border: 2px solid #e6e7eb;
 }
 
 .logout-button:hover {
-  border-color: #FF6B9D;
-  color: #FF6B9D;
+  border-color: #ff6b9d;
+  color: #ff6b9d;
 }
 
 .back-button:active,
@@ -282,7 +282,7 @@
 }
 
 .disclaimer-modal {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 20px;
   padding: 32px;
   max-width: 500px;
@@ -301,14 +301,14 @@
   margin: 0 0 16px 0;
   font-size: 14px;
   line-height: 1.6;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .disclaimer-modal ul {
   margin: 0 0 24px 0;
   padding-left: 20px;
   font-size: 14px;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .disclaimer-modal li {
@@ -318,8 +318,8 @@
 .dismiss-button {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, #FF6B9D 0%, #E63E6F 100%);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, #ff6b9d 0%, #e63e6f 100%);
+  color: #ffffff;
   border: none;
   border-radius: 12px;
   font-size: 16px;
@@ -342,7 +342,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  background: #F8F9FA;
+  background: #f8f9fa;
   padding: 24px 28px 32px 28px;
   -webkit-overflow-scrolling: touch;
 }
@@ -350,7 +350,7 @@
 /* Sections */
 .edit-section,
 .list-section {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 20px;
   padding: 24px;
   margin-bottom: 24px;
@@ -392,7 +392,7 @@
 
 .form-group input {
   padding: 12px;
-  border: 2px solid #E6E7EB;
+  border: 2px solid #e6e7eb;
   border-radius: 12px;
   font-size: 14px;
   transition: border-color 200ms;
@@ -400,7 +400,7 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #FF6B9D;
+  border-color: #ff6b9d;
 }
 
 /* Button Group */
@@ -422,8 +422,8 @@
 }
 
 .save-button {
-  background: linear-gradient(135deg, #FF6B9D 0%, #E63E6F 100%);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, #ff6b9d 0%, #e63e6f 100%);
+  color: #ffffff;
   flex: 1;
 }
 
@@ -433,14 +433,14 @@
 }
 
 .cancel-button {
-  background: #FFFFFF;
-  color: #6B7280;
-  border: 2px solid #E6E7EB;
+  background: #ffffff;
+  color: #6b7280;
+  border: 2px solid #e6e7eb;
 }
 
 .cancel-button:hover {
-  border-color: #FF6B9D;
-  color: #FF6B9D;
+  border-color: #ff6b9d;
+  color: #ff6b9d;
 }
 
 .save-button:active,
@@ -453,7 +453,7 @@
 .empty-state {
   text-align: center;
   padding: 40px;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .empty-state .hint {
@@ -468,8 +468,8 @@
 }
 
 .pet-card {
-  background: #FAEEF2;
-  border: 1px solid #FFB3D1;
+  background: #faeef2;
+  border: 1px solid #ffb3d1;
   border-radius: 16px;
   padding: 20px;
   transition: transform 200ms, box-shadow 200ms;
@@ -494,11 +494,11 @@
 .pet-species {
   display: inline-block;
   padding: 4px 12px;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  color: #E63E6F;
+  color: #e63e6f;
 }
 
 .pet-details {
@@ -508,12 +508,12 @@
 .pet-details p {
   margin: 8px 0;
   font-size: 14px;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .pet-time {
   font-size: 12px;
-  color: #9CA3AF;
+  color: #9ca3af;
 }
 
 .pet-actions {
@@ -534,25 +534,25 @@
 }
 
 .edit-btn {
-  background: #FFFFFF;
-  color: #FF6B9D;
-  border: 2px solid #FFB3D1;
+  background: #ffffff;
+  color: #ff6b9d;
+  border: 2px solid #ffb3d1;
 }
 
 .edit-btn:hover {
-  background: #FF6B9D;
-  color: #FFFFFF;
+  background: #ff6b9d;
+  color: #ffffff;
 }
 
 .delete-btn {
-  background: #FFFFFF;
-  color: #E63E6F;
-  border: 2px solid #FFB3D1;
+  background: #ffffff;
+  color: #e63e6f;
+  border: 2px solid #ffb3d1;
 }
 
 .delete-btn:hover {
-  background: #E63E6F;
-  color: #FFFFFF;
+  background: #e63e6f;
+  color: #ffffff;
 }
 
 .edit-btn:active,
@@ -625,7 +625,7 @@
   .data-manager {
     align-items: center;
     justify-content: flex-start;
-    background: #E5E7EB;
+    background: #e5e7eb;
     padding-top: 40px;
   }
 
@@ -643,7 +643,7 @@
     max-width: 1200px;
     width: 100%;
     border-radius: 0 0 16px 16px;
-    background: #F8F9FA;
+    background: #f8f9fa;
   }
 }
 
@@ -652,8 +652,8 @@
   width: 100%;
   max-width: 400px;
   height: 59px;
-  background: linear-gradient(135deg, #FF6B9D 0%, #E63E6F 100%);
-  color: #FFFFFF;
+  background: linear-gradient(135deg, #ff6b9d 0%, #e63e6f 100%);
+  color: #ffffff;
   border: none;
   border-radius: 15px;
   font-size: 16px;
@@ -674,4 +674,17 @@
 .back-to-main-button:active {
   transform: scale(0.95);
   opacity: 0.9;
+}
+
+.bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 16px; /* space between the home button and QR controls */
+  margin-top: 24px;
+  flex-wrap: wrap; /* keeps it neat on smaller screens */
+}
+
+/* optional: remove top margin if your PetQrControls adds one */
+.bottom-row .petqr-row {
+  margin-top: 0;
 }
