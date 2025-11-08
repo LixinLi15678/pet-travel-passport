@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/config";
 import dataService from "../services/dataService";
@@ -6,6 +6,8 @@ import fileUploadService from "../services/fileUploadService";
 import FileUpload from "./FileUpload";
 import "./DataManager.css";
 import PetQrControls from "./PetQrControls";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 /**
  * Data Manager Component - View, Add, Edit, Delete
@@ -27,6 +29,8 @@ const DataManager = ({
   const [showAccountPopup, setShowAccountPopup] = useState(false);
   const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
   const [loading, setLoading] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const exportContainerRef = useRef(null);
   const loadAllPets = useCallback(async () => {
     if (!user?.uid) {
       setPets([]);
@@ -167,8 +171,55 @@ const DataManager = ({
     setUploadedFiles(files);
   };
 
+  const handleExportPdf = useCallback(async () => {
+    if (!exportContainerRef.current) {
+      alert("Unable to access the export content.");
+      return;
+    }
+
+    const scale =
+      typeof window !== "undefined"
+        ? Math.min(2, window.devicePixelRatio || 1)
+        : 1;
+
+    setExportingPdf(true);
+    try {
+      const canvas = await html2canvas(exportContainerRef.current, {
+        scale,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save("pet-data-manager.pdf");
+    } catch (error) {
+      console.error("Export PDF error:", error);
+      alert("Failed to export PDF. Please try again.");
+    } finally {
+      setExportingPdf(false);
+    }
+  }, []);
+
   return (
-    <div className="data-manager">
+    <div className="data-manager" ref={exportContainerRef}>
       {/* Fixed Header and Status Bar Section - matching MainPage style */}
       <div className="fixed-header-section">
         {/* Header Section */}
@@ -402,6 +453,13 @@ const DataManager = ({
         <div className="bottom-row">
           <button onClick={onBackToMain} className="back-to-main-button">
             To First Page
+          </button>
+          <button
+            onClick={handleExportPdf}
+            className="export-pdf-button"
+            disabled={exportingPdf}
+          >
+            {exportingPdf ? "Exporting..." : "Export to PDF"}
           </button>
 
           <PetQrControls pets={pets} userEmail={user?.email} dbRegion="nam5" />
