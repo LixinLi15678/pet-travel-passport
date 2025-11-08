@@ -3,13 +3,11 @@ import { QRCodeCanvas } from "qrcode.react";
 import "./PetQrControls.css";
 
 /**
- * QR controls WITHOUT any Home button.
- * Props:
- *  - pets: array of pet objects from Firestore
- *  - userEmail: (optional) email for metadata
- *  - dbRegion: (optional) e.g. "nam5"
+ * Generates a compact QR payload for a single pet.
+ * Format: ptp://v=1&uid=...&pid=...&n=...&sp=...&w=...
+ * (No long document blob, no email.)
  */
-const PetQrControls = ({ pets, userEmail, dbRegion = "nam5" }) => {
+const PetQrControls = ({ pets, /* userEmail (unused now) */ dbRegion = "nam5" }) => {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [showQR, setShowQR] = useState(false);
   const [qrPayload, setQrPayload] = useState("");
@@ -18,38 +16,34 @@ const PetQrControls = ({ pets, userEmail, dbRegion = "nam5" }) => {
   const options = useMemo(
     () =>
       (pets || []).map((p, i) => ({
-        label: p?.name ? `${p.name} (${p.species || "pet"})` : `Pet ${i + 1}`,
+        label: p?.name ? `${p.name} (${p?.species || "pet"})` : `Pet ${i + 1}`,
         value: i,
       })),
     [pets]
   );
 
-  const buildQrPayload = (pet) => {
-    const files = Array.isArray(pet.files)
-      ? pet.files.map((f) => ({
-          id: String(f?.id ?? ""),
-          name: String(f?.name ?? ""),
-          size: typeof f?.size === "number" ? f.size : Number(f?.size ?? 0),
-          source: String(f?.source ?? ""),
-          type: String(f?.type ?? ""),
-          uploadedAt: String(f?.uploadedAt ?? ""),
-          userId: String(f?.userId ?? ""),
-        }))
-      : [];
+  // Build a SHORT, unique string (querystring-like) instead of a big JSON blob.
+  const buildCompactPayload = (pet) => {
+    const uid = String(pet?.userId ?? "");
+    const pid = String(pet?.id ?? pet?.docId ?? ""); // support different id field names
+    const n   = String(pet?.name ?? "");
+    const sp  = String(pet?.species ?? "");
+    const w   = String(pet?.weight ?? "");
 
-    return {
-      app: "Pet Travel Passport",
-      version: 1,
-      exportedBy: userEmail || "",
-      db: { provider: "firestore", region: dbRegion },
-      pet: {
-        name: String(pet?.name ?? ""),
-        species: String(pet?.species ?? ""),
-        weight: String(pet?.weight ?? ""),
-        updatedAt: String(pet?.updatedAt ?? ""),
-        files,
-      },
-    };
+    // prefix with a custom scheme so scanners just show text/URL-like params, not an email
+    const pairs = [
+      ["v", "1"],
+      ["uid", uid],
+      ["pid", pid],
+      ["n", n],
+      ["sp", sp],
+      ["w", w],
+      ["r", dbRegion], // optional: db region for importers
+    ]
+      .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+      .join("&");
+
+    return `ptp://?${pairs}`;
   };
 
   const handleGenerateQr = () => {
@@ -57,8 +51,8 @@ const PetQrControls = ({ pets, userEmail, dbRegion = "nam5" }) => {
       alert("Please select a pet first.");
       return;
     }
-    const payload = buildQrPayload(pets[selectedIndex]);
-    setQrPayload(JSON.stringify(payload));
+    const payload = buildCompactPayload(pets[selectedIndex]);
+    setQrPayload(payload);
     setShowQR(true);
   };
 
@@ -79,9 +73,7 @@ const PetQrControls = ({ pets, userEmail, dbRegion = "nam5" }) => {
           className="petqr-select"
           value={selectedIndex ?? ""}
           onChange={(e) =>
-            setSelectedIndex(
-              e.target.value === "" ? null : Number(e.target.value)
-            )
+            setSelectedIndex(e.target.value === "" ? null : Number(e.target.value))
           }
           aria-label="Choose a pet"
           title="Choose a pet"
@@ -112,11 +104,12 @@ const PetQrControls = ({ pets, userEmail, dbRegion = "nam5" }) => {
           >
             <h3>Pet QR Code</h3>
             <p className="petqr-sub">
-              Scan to import this pet’s info (DB region: {dbRegion}).
+              Scan to import this pet’s info (compact payload; region {dbRegion}).
             </p>
             <div className="petqr-code">
               <QRCodeCanvas value={qrPayload} size={260} level="M" />
             </div>
+            <code style={{ wordBreak: "break-all", fontSize: 12 }}>{qrPayload}</code>
             <div className="petqr-actions">
               <button className="petqr-download" onClick={handleDownloadQr}>
                 Download PNG
