@@ -110,7 +110,7 @@ const FileUpload = ({ userId, category = 'general', onUploadComplete, existingFi
       video.pause();
       video.srcObject = null;
     };
-  }, [showCamera]);
+  }, [showCamera, cameraPreview]);
 
   useEffect(() => () => {
     pendingPhotosRef.current.forEach(entry => {

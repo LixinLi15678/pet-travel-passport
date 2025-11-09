@@ -1,0 +1,75 @@
+.petqr-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.petqr-row-left {
+  justify-content: flex-start;
+} /* stays on the left */
+
+.petqr-select {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.5px solid #e9c2cd;
+  background: #fff;
+}
+
+.petqr-generate {
+  background: #fff;
+  border: 2px solid #ff5a84;
+  color: #ff5a84;
+  border-radius: 14px;
+  padding: 10px 16px;
+  font-weight: 600;
+}
+.petqr-generate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* modal styles unchanged */
+.petqr-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.petqr-modal {
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px;
+  width: min(92vw, 380px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+.petqr-sub {
+  color: #666;
+  margin: 4px 0 12px;
+}
+.petqr-code {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+}
+.petqr-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+.petqr-download,
+.petqr-close {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+.petqr-download {
+  background: #ff5a84;
+  color: #fff;
+}
+.petqr-close {
+  background: #eee;
+}
