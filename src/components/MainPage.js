@@ -4,11 +4,19 @@ import './MainPage.css';
 /**
  * Main Page - First page of Pet Travel Passport
  */
-const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTip }) => {
+const MainPage = ({
+  onBeginSetup,
+  user,
+  onLogout,
+  showLoginTip,
+  onDismissLoginTip,
+  onOpenHelp, // ← NEW: add handler to open Help overlay
+}) => {
   const [showAccountPopup, setShowAccountPopup] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
   const welcomeCatSrc = `${process.env.PUBLIC_URL}/assets/icons/icons8-cat-100.png`;
+
   return (
     <div className="welcome-container">
       <div className="fixed-header-section">
@@ -141,7 +149,7 @@ const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTi
 
           {/* Description */}
           <p className="hero-description">
-            Set up your pet's travel passport<br/>
+            Set up your pet's travel passport<br />
             Get verified for stress-free airline check-in
           </p>
 
@@ -177,7 +185,10 @@ const MainPage = ({ onBeginSetup, user, onLogout, showLoginTip, onDismissLoginTi
         </button>
 
         {/* Help Link */}
-        <button className="help-link">
+        <button
+          className="help-link"
+          onClick={onOpenHelp} // ← NEW: open Help overlay
+        >
           Need Help?
         </button>
       </main>

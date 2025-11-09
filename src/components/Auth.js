@@ -9,7 +9,7 @@ import './Auth.css';
 /**
  * Authentication Component - Email/Password Login and Registration
  */
-const Auth = ({ onAuthSuccess }) => {
+const Auth = ({ onAuthSuccess, onOpenHelp }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -188,6 +188,17 @@ const Auth = ({ onAuthSuccess }) => {
               {isLogin ? 'Register now' : 'Login now'}
             </button>
           </p>
+
+          <div style={{ textAlign: 'center', marginTop: 8 }}>
+            <button
+              type="button"
+              className="link-button"
+              onClick={onOpenHelp}
+              aria-label="Open help"
+            >
+              Need Help?
+            </button>
+          </div>
         </div>
       </div>
     </div>
