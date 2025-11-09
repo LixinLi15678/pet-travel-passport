@@ -96,12 +96,16 @@ function App() {
     );
   }
 
-  // Decide what the main content is (Auth, MainPage, or DataManager),
-  // but always render the global Help link/overlay below.
+  // Decide what page to show (Auth / MainPage / DataManager)
   let pageContent = null;
 
   if (currentPage === 'auth' || !user) {
-    pageContent = <Auth onAuthSuccess={handleAuthSuccess} />;
+    pageContent = (
+      <Auth
+        onAuthSuccess={handleAuthSuccess}
+        onOpenHelp={() => setShowHelp(true)}   // ✅ 新增这一行
+      />
+    );
   } else if (currentPage === 'main') {
     pageContent = (
       <MainPage
@@ -110,6 +114,7 @@ function App() {
         onLogout={handleLogout}
         showLoginTip={showLoginTip}
         onDismissLoginTip={handleDismissLoginTip}
+        onOpenHelp={() => setShowHelp(true)}
       />
     );
   } else {
@@ -126,24 +131,6 @@ function App() {
   return (
     <div className="App">
       {pageContent}
-
-      {/* Global "Help" link (underline, fixed at bottom-right) */}
-      <p
-        onClick={() => setShowHelp(true)}
-        style={{
-          position: 'fixed',
-          right: 20,
-          bottom: 20,
-          color: '#FF6B9D',
-          textDecoration: 'underline',
-          cursor: 'pointer',
-          fontSize: 16,
-          zIndex: 10000,
-          margin: 0,
-        }}
-      >
-        Help
-      </p>
 
       {/* Help overlay */}
       {showHelp && <Help onClose={() => setShowHelp(false)} />}

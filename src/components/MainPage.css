@@ -391,18 +391,18 @@
   opacity: 0.9;
 }
 
-/* Help Link */
 .help-link {
   background: transparent;
   border: none;
   color: #6B7280;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 8px;
+  padding: 4px 0;
   transition: color 200ms ease-in-out;
-  letter-spacing: -0.28px;
+  letter-spacing: -0.2px;
 }
+
 
 .help-link:hover {
   color: #FF6B9D;
