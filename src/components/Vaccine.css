@@ -356,6 +356,16 @@
   letter-spacing: 0.5px;
 }
 
+.no-pet-banner {
+  border-radius: 16px;
+  background: rgba(255, 107, 157, 0.1);
+  color: #C2410C;
+  padding: 16px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
 /* Action Buttons */
 .action-buttons {
   padding: 0 36px;
@@ -451,6 +461,7 @@
   background: #D1D5DB;
   transform: scale(1.05);
 }
+
 
 .preview-download-btn:disabled {
   opacity: 0.4;

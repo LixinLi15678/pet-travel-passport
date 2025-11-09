@@ -1,384 +1,176 @@
-# Firebase Database Schema Documentation
+# Firebase Database Schema (2025-11)
 
-## Overview
+The Pet Travel Passport app now uses three Firestore collections:
 
-This document describes the Firebase Firestore database schema for the Pet Travel Passport application. The database uses a user-centric structure where all passport data for each user is stored in a single document.
+1. `files` – every uploaded document (PDF/image) stored as a base64 payload plus metadata. Files are grouped per pet through the `petId` field.
+2. `userProgress` – one document per user that keeps UI state (current step, selected pet profile, list of pets, review status, etc.). This lets users leave the site and come back later without losing progress.
+3. `breeders` – one document per user that stores long‑lived pet metadata (names, creation dates) plus lightweight indexes of file IDs for each pet. This mirrors the UI’s “Pets” modal and lets future features look up files per pet without scanning the entire `files` collection.
 
-## Collection Structure
+> **Note:** Firebase Storage is not used. All file data lives directly inside Firestore documents so the UI can work offline via localStorage caching.
 
-```
-users (collection)
-  └── {userId} (document)
-       ├── userId: string
-       ├── passports: array
-       └── updatedAt: timestamp
-```
+---
 
-## Data Models
+## `files` Collection
 
-### Root Document: `users/{userId}`
+**Document path**: `files/{userId}_{fileId}`
 
 | Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `userId` | string | Yes | Unique identifier for the user (Firebase Auth UID) |
-| `passports` | array | Yes | Array of passport objects belonging to this user |
-| `updatedAt` | string (ISO 8601) | Yes | Last update timestamp for this user's data |
+| --- | --- | --- | --- |
+| `id` | string | Yes | File identifier generated on upload (`{timestamp}_{sanitizedName}`) |
+| `userId` | string | Yes | Firebase Auth UID of the owner |
+| `petId` | string | Yes | Pet profile this file belongs to (`pet_default` or custom `pet_{timestamp}`) |
+| `category` | string | Yes | Upload category (`"vaccine"` at the moment) |
+| `name` | string | Yes | Original filename |
+| `size` | number | Yes | Byte size of the file before base64 encoding |
+| `type` | string | Yes | MIME type (e.g., `application/pdf`, `image/jpeg`) |
+| `uploadedAt` | string (ISO 8601) | Yes | Timestamp set by the client when the file is saved |
+| `data` | string | Yes | Base64 data URL for the file (prefixed with `data:...;base64,`) |
+| `source` | string | No | Indicates where the cached copy originated (`"firestore"` or `"local"`) |
 
-### Passport Object
+### Example `files` document
 
-Each passport object in the `passports` array contains the following structure:
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `passportId` | string | Yes | Unique identifier for this passport |
-| `createdAt` | string (ISO 8601) | Yes | Timestamp when the passport was created |
-| `updatedAt` | string (ISO 8601) | Yes | Timestamp when the passport was last updated |
-| `carrier` | object | No | Information about the pet carrier |
-| `pet` | object | No | Information about the pet |
-| `vaccine` | object | No | Information about vaccination records |
-| `flight` | object | No | Information about the flight |
-
-### Carrier Object
-
-Contains dimensions and weight of the pet carrier.
-
-| Field | Type | Required | Unit | Description |
-|-------|------|----------|------|-------------|
-| `length` | number | Yes | inch | Length of the carrier in inches |
-| `width` | number | Yes | inch | Width of the carrier in inches |
-| `height` | number | Yes | inch | Height of the carrier in inches |
-| `weight` | number | Yes | lb | Weight of the carrier in pounds |
-
-**Example:**
 ```json
 {
-  "length": 18,
-  "width": 12,
-  "height": 12,
-  "weight": 5.5
+  "id": "1762665970545_passport.pdf",
+  "userId": "HvnvmsGpdvXrGfGYT3w6yqtP8vD2",
+  "petId": "pet_1731105600000",
+  "category": "vaccine",
+  "name": "passport.pdf",
+  "size": 482221,
+  "type": "application/pdf",
+  "uploadedAt": "2025-11-09T05:58:00.000Z",
+  "data": "data:application/pdf;base64,JVBERi0xLjcKJc...",
+  "source": "firestore"
 }
 ```
 
-### Pet Object
+Pet display labels in the UI follow the **first upload date + pet name** rule (e.g., `2025-11-09 Mochi`).
 
-Contains weight information about the pet.
+---
 
-| Field | Type | Required | Unit | Description |
-|-------|------|----------|------|-------------|
-| `weight` | number | Yes | lb | Weight of the pet in pounds |
-| `totalWeight` | number | Yes | lb | Combined weight of pet and carrier |
+## `userProgress` Collection
 
-**Example:**
-```json
-{
-  "weight": 11.5,
-  "totalWeight": 17.0
-}
-```
+**Document path**: `userProgress/{userId}`
 
-**Note:** `totalWeight` should equal `pet.weight + carrier.weight`
-
-### Vaccine Object
-
-Contains references to vaccination documents stored in Firebase Storage.
+Each document stores the current wizard step, which pet profile is active, and the list of all pets created by the user. The app also keeps lightweight stats (`lastFileIds`, `lastFileCount`) so it can quickly rebuild UI state without scanning the `files` collection each time.
 
 | Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `fileReferences` | array | Yes | Array of file reference objects |
+| --- | --- | --- | --- |
+| `currentStep` | string | Yes | Current wizard step (`"main"`, `"vaccine"`, etc.) |
+| `activePetId` | string | Yes | Pet profile currently selected in the UI |
+| `pets` | array | Yes | List of pet profile metadata (see below) |
+| `lastFileIds` | array of strings | No | Snapshot of the most recent file IDs for the active pet |
+| `lastFileCount` | number | No | Convenience count of `lastFileIds` |
+| `reviewReady` | boolean | No | Flag the UI sets after the user clicks “Continue to Review” |
+| `lastUpdated` | string (ISO 8601) | Yes | Timestamp when the document was last written |
 
-#### File Reference Object
+### Pet objects inside `pets`
 
 | Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `fileId` | string | Yes | Unique identifier for the file |
-| `fileName` | string | Yes | Original name of the uploaded file |
-| `fileSize` | number | Yes | Size of the file in bytes |
-| `fileType` | string | Yes | MIME type of the file (e.g., "image/jpeg", "application/pdf") |
-| `uploadedAt` | string (ISO 8601) | Yes | Timestamp when the file was uploaded |
-| `storagePath` | string | Yes | Path to the file in Firebase Storage |
+| --- | --- | --- | --- |
+| `id` | string | Yes | Unique pet identifier (`pet_{timestamp}`) |
+| `name` | string | No | User-provided pet name (required for new profiles, optional for legacy ones) |
+| `createdAt` | string (ISO 8601) | Yes | When the profile was created (or when the first file arrived) |
 
-**Example:**
+### Example `userProgress` document
+
 ```json
 {
-  "fileReferences": [
+  "currentStep": "vaccine",
+  "activePetId": "pet_1731105600000",
+  "pets": [
     {
-      "fileId": "file_1699123456789_abc123",
-      "fileName": "rabies_vaccine.pdf",
-      "fileSize": 524288,
-      "fileType": "application/pdf",
-      "uploadedAt": "2024-01-15T10:30:00.000Z",
-      "storagePath": "users/uid123/vaccine/file_1699123456789_abc123.pdf"
+      "id": "pet_1731105600000",
+      "name": "Mochi",
+      "createdAt": "2025-11-09T05:50:00.000Z"
     },
     {
-      "fileId": "file_1699123457890_def456",
-      "fileName": "health_certificate.jpg",
-      "fileSize": 1048576,
-      "fileType": "image/jpeg",
-      "uploadedAt": "2024-01-15T10:31:00.000Z",
-      "storagePath": "users/uid123/vaccine/file_1699123457890_def456.jpg"
+      "id": "pet_1731020000000",
+      "name": "Nori",
+      "createdAt": "2025-11-08T01:15:00.000Z"
     }
-  ]
+  ],
+  "lastFileIds": [
+    "1762665970545_passport.pdf",
+    "1762666000000_vet-letter.jpg"
+  ],
+  "lastFileCount": 2,
+  "reviewReady": true,
+  "lastUpdated": "2025-11-09T06:10:00.000Z"
 }
 ```
 
-**Important Notes:**
-- File references are stored in Firestore, not the actual file data
-- Actual files are stored in Firebase Storage at the path specified in `storagePath`
-- Base64 data is NOT stored in Firestore to keep document size small
-- Multiple files can be uploaded for a single passport
+---
 
-### Flight Object
+## Relationships & Notes
 
-Contains information about the flight booking.
+- Every document in `files` references exactly one pet via `petId`. Multiple pets simply mean multiple `petId` values for the same `userId`.
+- The UI’s **Pets** modal reads `userProgress/{uid}` to list pets, syncs pet names to `breeders/{uid}`, and then groups `files` client-side to show the documents per pet.
+- Because files are stored base64-encoded inside Firestore, keep an eye on document size limits (1 MiB). The frontend compresses images before upload and stores only small PDFs to stay within limits.
+- Local caching mirrors this schema: keys are built as `pet_passport_files_{userId}_{petId}_{fileId}` so offline mode can restore each pet’s files independently.
+
+---
+
+## `breeders` Collection
+
+**Document path**: `breeders/{userId}`
+
+This document is the authoritative list of pets for a user plus a lightweight per‑pet file index. It is updated whenever the user adds, deletes, or uploads files for a pet.
 
 | Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `pnr` | string | Yes | Passenger Name Record (booking reference) |
-| `flightNumber` | string | Yes | Flight number (e.g., "UA123") |
-| `flightDate` | string (ISO 8601) | Yes | Date and time of the flight |
+| --- | --- | --- | --- |
+| `userId` | string | Yes | Firebase Auth UID of the owner |
+| `pets` | array | Yes | List of pet objects (below) |
+| `updatedAt` | string (ISO 8601) | Yes | Timestamp of the latest update |
 
-**Example:**
+### Pet object inside `breeders`
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | Yes | Pet identifier (`pet_{timestamp}` or legacy `pet_default`) |
+| `name` | string | Yes | User-entered pet name |
+| `createdAt` | string (ISO 8601) | No | When the profile was created |
+| `files` | array | Yes | Array of file summaries belonging to the pet |
+
+Each entry in `files` contains:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `fileId` | string | ID that matches a document in the `files` collection |
+| `name` | string | Original filename |
+| `uploadedAt` | string (ISO 8601) | When the file was uploaded |
+| `type` | string | MIME type |
+| `size` | number | Size in bytes |
+
+### Example `breeders` document
+
 ```json
 {
-  "pnr" | "ABC123",
-  "flightNumber": "UA123",
-  "flightDate": "2024-02-20T14:30:00.000Z"
-}
-```
-
-## Complete Example Document
-
-```json
-{
-  "userId": "firebase_auth_uid_123",
-  "updatedAt": "2024-01-15T12:00:00.000Z",
-  "passports": [
+  "userId": "HvnvmsGpdvXrGfGYT3w6yqtP8vD2",
+  "updatedAt": "2025-11-09T06:15:00.000Z",
+  "pets": [
     {
-      "passportId": "passport_1699123456789_xyz789",
-      "createdAt": "2024-01-15T09:00:00.000Z",
-      "updatedAt": "2024-01-15T12:00:00.000Z",
-      "carrier": {
-        "length": 18,
-        "width": 12,
-        "height": 12,
-        "weight": 5.5
-      },
-      "pet": {
-        "weight": 11.5,
-        "totalWeight": 17.0
-      },
-      "vaccine": {
-        "fileReferences": [
-          {
-            "fileId": "file_1699123456789_abc123",
-            "fileName": "rabies_vaccine.pdf",
-            "fileSize": 524288,
-            "fileType": "application/pdf",
-            "uploadedAt": "2024-01-15T10:30:00.000Z",
-            "storagePath": "users/uid123/vaccine/file_1699123456789_abc123.pdf"
-          }
-        ]
-      },
-      "flight": {
-        "pnr": "ABC123",
-        "flightNumber": "UA123",
-        "flightDate": "2024-02-20T14:30:00.000Z"
-      }
+      "id": "pet_1731105600000",
+      "name": "Mochi",
+      "createdAt": "2025-11-09T05:50:00.000Z",
+      "files": [
+        {
+          "fileId": "1762665970545_passport.pdf",
+          "name": "passport.pdf",
+          "uploadedAt": "2025-11-09T05:58:00.000Z",
+          "type": "application/pdf",
+          "size": 482221
+        }
+      ]
+    },
+    {
+      "id": "pet_1731020000000",
+      "name": "Nori",
+      "createdAt": "2025-11-08T01:15:00.000Z",
+      "files": []
     }
   ]
 }
 ```
 
-## Firebase Storage Structure
-
-Vaccine files are stored in Firebase Storage with the following path structure:
-
-```
-users/
-  └── {userId}/
-       └── vaccine/
-            ├── file_{timestamp}_{id}.pdf
-            ├── file_{timestamp}_{id}.jpg
-            └── file_{timestamp}_{id}.png
-```
-
-**Example paths:**
-- `users/uid123/vaccine/file_1699123456789_abc123.pdf`
-- `users/uid123/vaccine/file_1699123457890_def456.jpg`
-
-## Data Types and Formats
-
-### String (ISO 8601 Timestamp)
-All timestamps use ISO 8601 format: `YYYY-MM-DDTHH:mm:ss.sssZ`
-- Example: `"2024-01-15T10:30:00.000Z"`
-
-### Number
-All numeric values are stored as JavaScript numbers
-- Weights: stored in pounds (lb)
-- Dimensions: stored in inches (inch)
-- File sizes: stored in bytes
-
-### String (File Path)
-Storage paths use forward slashes: `users/{userId}/vaccine/{filename}`
-
-## Best Practices
-
-### 1. Data Validation
-- Always validate data before writing to Firestore
-- Ensure `totalWeight = pet.weight + carrier.weight`
-- Validate file types and sizes before upload
-- Check for required fields
-
-### 2. File Management
-- Delete files from Storage when removing passport
-- Keep fileReferences synchronized with Storage
-- Implement proper error handling for file operations
-
-### 3. Security Rules
-Recommended Firestore security rules:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
-
-Recommended Storage security rules:
-
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /users/{userId}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
-
-### 4. Performance Optimization
-- Use localStorage as backup for offline access
-- Implement pagination for large passport lists
-- Cache frequently accessed data
-- Use batch operations for multiple updates
-
-### 5. Data Migration
-When migrating from old structure:
-- Convert pet data from array to passport objects
-- Migrate file data to Storage
-- Create fileReferences for existing files
-- Update timestamps to ISO 8601 format
-
-## Firebase Usage Examples
-
-**Note:** As of v2.1.1, the application uses direct Firebase operations instead of a service layer for simplicity.
-
-### Upload Vaccine File to Storage
-```javascript
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from './firebase/config';
-
-const uploadVaccineFile = async (userId, file, onProgress) => {
-  const fileId = `file_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  const fileName = `${fileId}_${file.name}`;
-  const storageRef = ref(storage, `users/${userId}/vaccine/${fileName}`);
-
-  const uploadTask = uploadBytesResumable(storageRef, file);
-
-  return new Promise((resolve, reject) => {
-    uploadTask.on('state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        onProgress?.(progress);
-      },
-      (error) => reject(error),
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        resolve({
-          fileId,
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-          uploadedAt: new Date().toISOString(),
-          storagePath: uploadTask.snapshot.ref.fullPath,
-          downloadURL
-        });
-      }
-    );
-  });
-};
-```
-
-### Delete File from Storage
-```javascript
-import { ref, deleteObject } from 'firebase/storage';
-import { storage } from './firebase/config';
-
-const deleteVaccineFile = async (storagePath) => {
-  const fileRef = ref(storage, storagePath);
-  await deleteObject(fileRef);
-};
-```
-
-### Save Passport Data to Firestore (Optional)
-```javascript
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from './firebase/config';
-
-const savePassportData = async (userId, passportData) => {
-  const userDocRef = doc(db, 'users', userId);
-  await setDoc(userDocRef, {
-    passports: [passportData],
-    updatedAt: new Date().toISOString()
-  }, { merge: true });
-};
-```
-
-### Load Passport Data from Firestore
-```javascript
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from './firebase/config';
-
-const loadPassportData = async (userId) => {
-  const userDocRef = doc(db, 'users', userId);
-  const docSnap = await getDoc(userDocRef);
-
-  if (docSnap.exists()) {
-    return docSnap.data();
-  }
-  return null;
-};
-```
-
-## Error Handling
-
-All service methods return Promises and handle errors gracefully:
-- Firestore errors fallback to localStorage
-- File upload errors are caught and reported
-- Network errors are handled with retry logic
-
-## Changelog
-
-### Version 2.0 (Current)
-- Introduced new passport-centric data structure
-- Separated file references from file data
-- Added support for multiple passports per user
-- Improved data organization and scalability
-
-### Version 1.0 (Legacy)
-- Simple array-based pet storage
-- Base64 encoded files in Firestore
-- Limited to single passport type
-
-## Support
-
-For questions or issues regarding the database schema:
-1. Check this documentation first
-2. Review the `passportService.js` implementation
-3. Consult Firebase Firestore documentation
-4. Contact the development team
+This schema should be provisioned before deploying the updated frontend so that every user can create multiple pets, switch profiles, and keep their uploaded vaccine files separated per pet.

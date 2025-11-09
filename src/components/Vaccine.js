@@ -1,14 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import fileUploadService from '../services/fileUploadService';
+import fileUploadService, { DEFAULT_PET_ID } from '../services/fileUploadService';
 import { compressImage, isImageFile } from '../utils/imageCompression';
+import PetsModal from './PetsModal';
 import './shared.css';
 import './Vaccine.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) => {
+const VaccineEnhanced = ({
+  user,
+  onNext,
+  onBack,
+  onLogout,
+  initialFiles = [],
+  onFilesChange,
+  petProfiles = [],
+  activePetId,
+  onPetChange,
+  onAddPet,
+  onDeletePet,
+  allFiles = []
+}) => {
   const [vaccineFiles, setVaccineFiles] = useState(initialFiles);
   const [uploadProgress, setUploadProgress] = useState({});
   const [isUploading, setIsUploading] = useState(false);
@@ -21,9 +35,28 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [showAccountPopup, setShowAccountPopup] = useState(false);
   const [pdfPageWidth, setPdfPageWidth] = useState(520);
+  const [showPetsModal, setShowPetsModal] = useState(false);
 
   const fileInputRef = useRef(null);
   const photoInputRef = useRef(null);
+  const activePet = activePetId || petProfiles[0]?.id || null;
+
+  const updateFiles = useCallback(
+    (updater) => {
+      if (!activePet) {
+        console.warn('No active pet selected. Unable to update files.');
+        return;
+      }
+      setVaccineFiles((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater;
+        if (onFilesChange) {
+          onFilesChange(activePet, next);
+        }
+        return next;
+      });
+    },
+    [onFilesChange, activePet]
+  );
 
   const isPdfFileType = (file) => {
     const name = file?.name?.toLowerCase() || '';
@@ -39,6 +72,23 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
       return `${(sizeInBytes / 1024).toFixed(1)} KB`;
     }
     return `${sizeInBytes} B`;
+  };
+
+  const handleOpenPetsModal = () => {
+    setShowPetsModal(true);
+    setShowAccountPopup(false);
+  };
+
+  const handleClosePetsModal = () => {
+    setShowPetsModal(false);
+  };
+
+  const handleSelectPetProfile = (petId) => {
+    if (onPetChange) {
+      onPetChange(petId);
+    }
+    setShowPetsModal(false);
+    setShowAccountPopup(false);
   };
 
   useEffect(() => {
@@ -119,8 +169,22 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
+  useEffect(() => {
+    setVaccineFiles(initialFiles);
+  }, [initialFiles]);
+
+  const uploadsDisabled = isUploading || !activePet;
+  const noPetSelected = !activePet;
+
   // File upload handler with compression
   const handleFileSelect = async (event) => {
+    if (!activePet) {
+      alert('Please add a pet profile before uploading documents.');
+      if (event?.target) {
+        event.target.value = '';
+      }
+      return;
+    }
     const files = Array.from(event.target.files || []);
     event.target.value = '';
 
@@ -164,6 +228,7 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
           validFiles,
           user.uid,
           'vaccine',
+          activePet,
           (index, progress) => {
             setUploadProgress(prev => ({
               ...prev,
@@ -171,7 +236,7 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
             }));
           }
         );
-        setVaccineFiles(prev => [...prev, ...results]);
+        updateFiles(prev => [...prev, ...results]);
         setUploadProgress({});
         alert(`Successfully uploaded ${results.length} file(s)!`);
       } catch (error) {
@@ -230,7 +295,7 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
 
     try {
       await fileUploadService.deleteFiles([fileToRemove], user.uid);
-      setVaccineFiles(prev => prev.filter((_, i) => i !== index));
+      updateFiles(prev => prev.filter((_, i) => i !== index));
     } catch (error) {
       console.error('Delete file error:', error);
       alert('Failed to remove file: ' + error.message);
@@ -275,17 +340,19 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
         }
 
         // Upload new file
+        const petScope = fileToReupload.petId || activePet || DEFAULT_PET_ID;
         const results = await fileUploadService.uploadFiles(
           [fileToUpload],
           user.uid,
           'vaccine',
+          petScope,
           (_, progress) => {
             setUploadProgress({ [`reupload_${index}`]: progress });
           }
         );
 
         // Replace in array
-        setVaccineFiles(prev => {
+        updateFiles(prev => {
           const newFiles = [...prev];
           newFiles[index] = results[0];
           return newFiles;
@@ -340,20 +407,23 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
     const [removed] = newFiles.splice(dragIndex, 1);
     newFiles.splice(dropIndex, 0, removed);
 
-    setVaccineFiles(newFiles);
+    updateFiles(newFiles);
     setDragOverIndex(null);
   };
 
   const handleContinue = () => {
+    if (!activePet) {
+      alert('Please add a pet profile before continuing.');
+      return;
+    }
     if (vaccineFiles.length === 0) {
       if (!window.confirm('No vaccine documents uploaded. Continue anyway?')) {
         return;
       }
     }
 
-    if (onNext) {
-      onNext({ vaccineFiles });
-    }
+    if (!onNext) return;
+    onNext({ vaccineFiles, petId: activePet });
   };
 
   const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
@@ -397,6 +467,12 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
                     onClick={(e) => e.stopPropagation()}
                   >
                     <p className="account-email">{user.email}</p>
+                    <button
+                      className="popup-pets-button"
+                      onClick={handleOpenPetsModal}
+                    >
+                      Pets
+                    </button>
                     <button
                       className="popup-logout-button"
                       onClick={() => {
@@ -467,6 +543,12 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
 
           <div className="title-divider" />
 
+          {noPetSelected && (
+            <div className="no-pet-banner">
+              Add a pet profile from the account menu before uploading documents.
+            </div>
+          )}
+
           {/* Upload Options */}
           <div className="upload-options">
             {/* File Upload */}
@@ -476,7 +558,7 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
               <button
                 className="upload-button"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
+                disabled={uploadsDisabled}
               >
                 Choose File
               </button>
@@ -499,7 +581,7 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
               <button
                 className="upload-button"
                 onClick={() => photoInputRef.current?.click()}
-                disabled={isUploading}
+                disabled={uploadsDisabled}
               >
                 Choose Photo(s)
               </button>
@@ -593,7 +675,7 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
             <button
               className="primary-button continue-button"
               onClick={handleContinue}
-              disabled={isUploading}
+              disabled={isUploading || noPetSelected}
             >
               Continue to Review
             </button>
@@ -607,6 +689,19 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
           </div>
         </div>
       </main>
+
+      {showPetsModal && (
+        <PetsModal
+          isOpen={showPetsModal}
+          onClose={handleClosePetsModal}
+          petProfiles={petProfiles}
+          activePetId={activePet}
+          onSelectPet={handleSelectPetProfile}
+          onAddPet={onAddPet}
+          onDeletePet={onDeletePet}
+          allFiles={allFiles}
+        />
+      )}
 
       {/* File Preview Modal */}
       {previewFile && (

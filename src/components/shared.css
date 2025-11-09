@@ -137,6 +137,23 @@
   transform: scale(0.95);
 }
 
+.popup-pets-button {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 200ms ease-in-out;
+  background: rgba(255, 107, 157, 0.12);
+  color: #FF6B9D;
+}
+
+.popup-pets-button:hover {
+  background: rgba(255, 107, 157, 0.2);
+}
+
 /* Header Divider Line */
 .header-divider {
   width: 100%;
@@ -375,6 +392,14 @@
 .primary-button:active {
   transform: scale(0.95);
   opacity: 0.9;
+}
+
+.primary-button:disabled {
+  background: #FFD6E8;
+  color: #FFFFFF;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.8;
 }
 
 .secondary-button {

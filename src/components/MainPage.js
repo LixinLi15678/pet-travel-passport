@@ -1,15 +1,71 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import PetsModal from './PetsModal';
+import { DEFAULT_PET_ID } from '../services/fileUploadService';
 import './shared.css';
 import './MainPage.css';
 
 /**
  * Main Page - First page of Pet Travel Passport
  */
-const MainPage = ({ user, onLogout, showLoginTip, onDismissLoginTip, onBeginSetup }) => {
+const MainPage = ({
+  user,
+  onLogout,
+  showLoginTip,
+  onDismissLoginTip,
+  onBeginSetup,
+  petProfiles = [],
+  activePetId,
+  onPetChange,
+  onAddPet,
+  onDeletePet,
+  allFiles = []
+}) => {
   const [showAccountPopup, setShowAccountPopup] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [showPetsModal, setShowPetsModal] = useState(false);
   const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
   const welcomeCatSrc = `${process.env.PUBLIC_URL}/assets/icons/icons8-cat-100.png`;
+
+  const activePet = activePetId || petProfiles[0]?.id || null;
+  const hasPets = petProfiles.length > 0;
+
+  const currentPetName = useMemo(() => {
+    const pet = activePet ? petProfiles.find((p) => p.id === activePet) : null;
+    if (!pet || !activePet) {
+      return 'Add a pet to continue';
+    }
+    const filesForPet = allFiles
+      .filter((file) => (file.petId || DEFAULT_PET_ID) === activePet)
+      .sort((a, b) => {
+        const aTime = new Date(a.uploadedAt || 0).getTime();
+        const bTime = new Date(b.uploadedAt || 0).getTime();
+        return aTime - bTime;
+      });
+
+    const referenceDate = filesForPet[0]?.uploadedAt || pet?.createdAt;
+    const date = referenceDate ? new Date(referenceDate) : null;
+    if (!date || Number.isNaN(date.getTime())) {
+      return pet?.name || 'CAT';
+    }
+    return `${date.toISOString().slice(0, 10)} ${pet?.name || 'CAT'}`;
+  }, [activePet, allFiles, petProfiles]);
+
+  const handleOpenPetsModal = () => {
+    setShowPetsModal(true);
+    setShowAccountPopup(false);
+  };
+
+  const handleClosePetsModal = () => {
+    setShowPetsModal(false);
+  };
+
+  const handleSelectPet = (petId) => {
+    if (onPetChange) {
+      onPetChange(petId);
+    }
+    setShowPetsModal(false);
+    setShowAccountPopup(false);
+  };
   return (
     <div className="page-background">
       <div className="page-header">
@@ -37,6 +93,12 @@ const MainPage = ({ user, onLogout, showLoginTip, onDismissLoginTip, onBeginSetu
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p className="account-email">{user.email}</p>
+                      <button
+                        className="popup-pets-button"
+                        onClick={handleOpenPetsModal}
+                      >
+                        Pets
+                      </button>
                       <button
                         className="popup-logout-button"
                         onClick={() => {
@@ -166,7 +228,21 @@ const MainPage = ({ user, onLogout, showLoginTip, onDismissLoginTip, onBeginSetu
         </div>
 
         {/* Begin Button */}
-        <button className="primary-button begin-button" onClick={onBeginSetup}>
+        <div className="pet-selector-card">
+          <div>
+            <p className="pet-selector-label">{hasPets ? 'Current Pet' : 'Add a pet to continue'}</p>
+            <h3 className="pet-selector-name">{currentPetName}</h3>
+          </div>
+          <button className="pet-selector-manage" onClick={handleOpenPetsModal}>
+            {hasPets ? 'Manage Pets' : 'Add Pet'}
+          </button>
+        </div>
+
+        <button
+          className="primary-button begin-button"
+          onClick={onBeginSetup}
+          disabled={!hasPets}
+        >
           Begin Setup
         </button>
 
@@ -175,6 +251,19 @@ const MainPage = ({ user, onLogout, showLoginTip, onDismissLoginTip, onBeginSetu
           Need Help?
         </button>
       </main>
+
+      {showPetsModal && (
+        <PetsModal
+          isOpen={showPetsModal}
+          onClose={handleClosePetsModal}
+          petProfiles={petProfiles}
+          activePetId={activePet}
+          onSelectPet={handleSelectPet}
+          onAddPet={onAddPet}
+          onDeletePet={onDeletePet}
+          allFiles={allFiles}
+        />
+      )}
     </div>
   );
 };

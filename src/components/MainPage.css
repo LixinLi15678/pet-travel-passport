@@ -108,6 +108,44 @@
   transform: scale(0.95);
 }
 
+.pet-selector-card {
+  width: 100%;
+  margin: 24px 0 12px;
+  padding: 20px;
+  border-radius: 18px;
+  background: #FFFFFF;
+  border: 1px solid #F3F4F6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.pet-selector-label {
+  margin: 0;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: #9CA3AF;
+}
+
+.pet-selector-name {
+  margin: 4px 0 0;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.pet-selector-manage {
+  border: 1px solid #FF6B9D;
+  color: #FF6B9D;
+  background: transparent;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 /* Login Tip Modal */
 .login-tip-overlay {
   position: fixed;
