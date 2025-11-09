@@ -19,7 +19,7 @@
 .vaccine-icon {
   width: 49px;
   height: 49px;
-  background: #FFB3D1;
+  background: linear-gradient(315deg, rgba(230, 62, 111, 0.75) 0%, rgba(255, 107, 157, 0.75) 100%);
   border-radius: 13px;
   display: flex;
   align-items: center;
@@ -154,29 +154,32 @@
   border-radius: 6px;
 }
 
-.file-list {
+.files-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .file-item {
-  background: rgba(255, 179, 209, 0.1);
-  border: 1px solid #FFB3D1;
+  background: white;
+  border: 1px solid #E5E7EB;
   border-radius: 12px;
-  padding: 12px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   transition: all 200ms ease-in-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .file-item:hover {
-  background: rgba(255, 179, 209, 0.2);
+  background: rgba(255, 179, 209, 0.08);
+  border-color: #FFB3D1;
   transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
 .file-item.dragging {
@@ -207,42 +210,38 @@
   cursor: grabbing;
 }
 
-.file-number {
-  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-  color: #FF6B9D;
-  min-width: 24px;
-  text-align: center;
-}
-
 .file-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .file-name {
   font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
-  color: #000000;
-  margin: 0 0 4px 0;
+  color: #111827;
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.4;
 }
 
 .file-size {
   font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-weight: 400;
+  font-weight: 500;
   font-size: 12px;
   color: #6B7280;
   margin: 0;
+  line-height: 1.3;
 }
 
 .file-actions {
   display: flex;
-  gap: 8px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -250,18 +249,24 @@
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 8px;
-  background: white;
+  border-radius: 6px;
+  background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  color: #6B7280;
   transition: all 200ms ease-in-out;
+}
+
+.file-action-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 .file-action-btn:hover {
   transform: scale(1.1);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .file-action-btn:active {
@@ -269,21 +274,24 @@
 }
 
 .file-action-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
   transform: none !important;
 }
 
 .preview-btn:hover {
-  background: #E8F4FF;
+  color: #3B82F6;
+  background: rgba(59, 130, 246, 0.1);
 }
 
 .reupload-btn:hover {
-  background: #FFF5E8;
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.1);
 }
 
 .remove-btn:hover {
-  background: #FFE8E8;
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 /* Upload Progress Bar */
@@ -292,19 +300,40 @@
   margin-top: 16px;
 }
 
+/* Uploaded Files Section */
+.uploaded-files {
+  padding: 12px 36px;
+}
+
+.files-title {
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #111827;
+  margin: 0 0 6px 0;
+}
+
+.files-hint {
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  color: #9CA3AF;
+  margin: 0 0 16px 0;
+}
+
 .upload-progress-bar {
   width: 100%;
-  height: 8px;
+  height: 26px;
   background: rgba(255, 179, 209, 0.3);
-  border-radius: 4px;
+  border-radius: 999px;
   overflow: hidden;
   position: relative;
 }
 
 .upload-progress-fill {
   height: 100%;
-  background: linear-gradient(135deg, #FF6B9D 0%, #E63E6F 100%);
-  border-radius: 4px;
+  background: linear-gradient(90deg, #FF6B9D 0%, #E63E6F 100%);
+  border-radius: 999px;
   transition: width 300ms ease-in-out;
   display: flex;
   align-items: center;
@@ -317,6 +346,14 @@
   font-size: 10px;
   color: white;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+  letter-spacing: 0.5px;
 }
 
 /* Action Buttons */
@@ -334,157 +371,240 @@
   cursor: not-allowed;
 }
 
-/* Camera Modal */
-.camera-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.95);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.camera-container {
-  width: 100%;
-  max-width: 600px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.camera-view,
-.camera-preview {
-  width: 100%;
-  max-width: 600px;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.camera-preview {
-  max-height: 80vh;
-  object-fit: contain;
-}
-
-.camera-controls {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.camera-btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 12px;
-  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-weight: 700;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 200ms ease-in-out;
-  min-width: 120px;
-}
-
-.camera-btn:hover {
-  transform: translateY(-2px);
-}
-
-.camera-btn:active {
-  transform: scale(0.95);
-}
-
-.capture-btn {
-  background: linear-gradient(135deg, #FF6B9D 0%, #E63E6F 100%);
-  color: white;
-  box-shadow: 0 4px 16px rgba(230, 62, 111, 0.4);
-}
-
-.retake-btn {
-  background: white;
-  color: #E63E6F;
-  border: 2px solid #E63E6F;
-}
-
-.upload-capture-btn {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  color: white;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
-}
-
-.close-camera-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 2px solid white;
-}
-
 /* File Preview Modal */
+.preview-modal,
 .file-preview-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
-  z-index: 1000;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1100;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 24px;
   cursor: pointer;
+  backdrop-filter: blur(4px);
 }
 
+.preview-container,
 .file-preview-content {
-  max-width: 90%;
-  max-height: 90%;
+  width: min(90vw, 960px);
+  max-height: 90vh;
+  background: #FFFFFF;
+  border-radius: 18px;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  padding: 32px 32px 28px;
   cursor: default;
 }
 
-.preview-image {
-  max-width: 100%;
-  max-height: 80vh;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+.preview-top-actions {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.preview-pdf {
-  width: 90vw;
-  height: 80vh;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  background: white;
-}
-
-.close-preview-btn {
-  padding: 12px 24px;
-  background: white;
-  color: #E63E6F;
+.preview-close {
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 12px;
-  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  border-radius: 999px;
+  background: #FF6B9D;
+  color: white;
+  font-size: 18px;
   font-weight: 700;
-  font-size: 16px;
   cursor: pointer;
   transition: all 200ms ease-in-out;
+  box-shadow: 0 8px 20px rgba(230, 62, 111, 0.35);
 }
 
-.close-preview-btn:hover {
-  background: #FFF5F9;
-  transform: translateY(-2px);
+.preview-close:hover {
+  background: #E63E6F;
+  transform: scale(1.05);
 }
 
-.close-preview-btn:active {
-  transform: scale(0.95);
+.preview-download-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: #E5E7EB;
+  color: #374151;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 200ms ease-in-out;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+}
+
+.preview-download-btn:hover {
+  background: #D1D5DB;
+  transform: scale(1.05);
+}
+
+.preview-download-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.preview-download-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.preview-image {
+  width: 100%;
+  max-height: calc(90vh - 180px);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  object-fit: contain;
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.preview-pdf-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.preview-pdf-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-pdf-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-pdf-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
+}
+
+.preview-pdf-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.preview-pdf-frame {
+  width: 100%;
+  max-height: 60vh;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.85);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.preview-pdf-viewer {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.65);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: auto;
+  padding: 12px;
+}
+
+.preview-pdf-viewer canvas {
+  border-radius: 12px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+  background: white;
+}
+
+.preview-pdf-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.preview-pdf-page-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: none;
+  background: #F3F4F6;
+  font-weight: 700;
+  font-size: 16px;
+  color: #111827;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+  box-shadow: 0 6px 15px rgba(15, 23, 42, 0.15);
+}
+
+.preview-pdf-page-btn:hover {
+  transform: translateY(-1px);
+}
+
+.preview-pdf-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.preview-pdf-pagination-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4B5563;
+  min-width: 120px;
+  text-align: center;
+}
+
+.preview-pdf-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 24px;
+}
+
+.preview-unsupported {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.preview-unsupported p {
+  margin: 6px 0;
+}
+
+.preview-unsupported .file-name {
+  font-weight: 700;
+  word-break: break-word;
 }
 
 /* Responsive Design */
@@ -501,6 +621,10 @@
     padding: 0 28px;
   }
 
+  .uploaded-files {
+    padding: 20px 28px;
+  }
+
   .file-list-container {
     padding: 16px 28px;
   }
@@ -511,5 +635,14 @@
 
   .upload-progress-container {
     padding: 0 28px;
+  }
+
+  .preview-pdf-frame {
+    max-height: 50vh;
+    padding: 12px;
+  }
+
+  .preview-pdf-pagination {
+    flex-direction: column;
   }
 }

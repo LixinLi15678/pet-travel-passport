@@ -1,24 +1,123 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import fileUploadService from '../services/fileUploadService';
 import { compressImage, isImageFile } from '../utils/imageCompression';
 import './shared.css';
 import './Vaccine.css';
 
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) => {
   const [vaccineFiles, setVaccineFiles] = useState(initialFiles);
-  const [showCamera, setShowCamera] = useState(false);
-  const [cameraPreview, setCameraPreview] = useState(null);
   const [uploadProgress, setUploadProgress] = useState({});
   const [isUploading, setIsUploading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [pdfLoadError, setPdfLoadError] = useState(null);
+  const [pdfNumPages, setPdfNumPages] = useState(null);
+  const [pdfPageNumber, setPdfPageNumber] = useState(1);
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const [showAccountPopup, setShowAccountPopup] = useState(false);
+  const [pdfPageWidth, setPdfPageWidth] = useState(520);
 
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const streamRef = useRef(null);
   const fileInputRef = useRef(null);
   const photoInputRef = useRef(null);
+
+  const isPdfFileType = (file) => {
+    const name = file?.name?.toLowerCase() || '';
+    return file?.type === 'application/pdf' || name.endsWith('.pdf');
+  };
+
+  const formatFileSize = (sizeInBytes) => {
+    if (typeof sizeInBytes !== 'number') return null;
+    if (sizeInBytes >= 1024 * 1024) {
+      return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+    if (sizeInBytes >= 1024) {
+      return `${(sizeInBytes / 1024).toFixed(1)} KB`;
+    }
+    return `${sizeInBytes} B`;
+  };
+
+  useEffect(() => {
+    let isCancelled = false;
+    let objectUrl = null;
+
+    const cleanupObjectUrl = () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrl = null;
+      }
+    };
+
+    if (!previewFile || !isPdfFileType(previewFile)) {
+      cleanupObjectUrl();
+      setPdfPreviewUrl(null);
+      setIsPdfLoading(false);
+      setPdfLoadError(null);
+      setPdfNumPages(null);
+      setPdfPageNumber(1);
+      return () => {};
+    }
+
+    const loadPdfPreview = async () => {
+      setIsPdfLoading(true);
+      setPdfLoadError(null);
+      setPdfNumPages(null);
+      setPdfPageNumber(1);
+      try {
+        const inlineSource = previewFile.data || previewFile.url;
+
+        if (previewFile.url && (previewFile.url.startsWith('http') || previewFile.url.startsWith('blob:'))) {
+          setPdfPreviewUrl(previewFile.url);
+        } else if (inlineSource?.startsWith('data:')) {
+          const response = await fetch(inlineSource);
+          if (!response.ok) {
+            throw new Error('Failed to load PDF preview');
+          }
+          const blob = await response.blob();
+          if (isCancelled) return;
+          cleanupObjectUrl();
+          objectUrl = URL.createObjectURL(blob);
+          setPdfPreviewUrl(objectUrl);
+        } else if (inlineSource) {
+          setPdfPreviewUrl(inlineSource);
+        } else {
+          setPdfPreviewUrl(null);
+        }
+      } catch (error) {
+        console.error('PDF preview error:', error);
+        if (!isCancelled) {
+          setPdfPreviewUrl(null);
+          setPdfLoadError('Unable to load PDF preview.');
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsPdfLoading(false);
+        }
+      }
+    };
+
+    loadPdfPreview();
+
+    return () => {
+      isCancelled = true;
+      cleanupObjectUrl();
+    };
+  }, [previewFile]);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (typeof window === 'undefined') return;
+      const maxWidth = Math.min(560, window.innerWidth - 60);
+      setPdfPageWidth(Math.max(280, maxWidth));
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   // File upload handler with compression
   const handleFileSelect = async (event) => {
@@ -89,116 +188,38 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
     await handleFileSelect(event);
   };
 
-  // Camera functions
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
-      streamRef.current = stream;
-      setCameraPreview(null);
-      setShowCamera(true);
-
-      setTimeout(() => {
-        if (videoRef.current && streamRef.current) {
-          videoRef.current.srcObject = streamRef.current;
-        }
-      }, 100);
-    } catch (error) {
-      console.error('Camera error:', error);
-      alert('Cannot access camera: ' + error.message);
-    }
+  const handleDownloadPdf = () => {
+    if (!previewFile) return;
+    const source = pdfPreviewUrl || previewFile.data || previewFile.url;
+    if (!source) return;
+    const link = document.createElement('a');
+    link.href = source;
+    link.download = previewFile.name || 'document.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const closeCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-
-    if (cameraPreview?.previewUrl) {
-      URL.revokeObjectURL(cameraPreview.previewUrl);
-    }
-
-    setCameraPreview(null);
-    setShowCamera(false);
+  const handlePdfLoadSuccess = ({ numPages }) => {
+    setPdfNumPages(numPages);
+    setPdfPageNumber(1);
+    setPdfLoadError(null);
   };
 
-  const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-      alert('Camera is still initializing. Please try again.');
-      return;
-    }
-
-    const context = canvas.getContext('2d');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const timestamp = new Date().getTime();
-        const file = new File([blob], `vaccine_photo_${timestamp}.jpg`, {
-          type: 'image/jpeg'
-        });
-
-        setCameraPreview({
-          file,
-          previewUrl: URL.createObjectURL(file)
-        });
-      }
-    }, 'image/jpeg', 0.9);
+  const handlePdfLoadError = (error) => {
+    console.error('PDF render error:', error);
+    setPdfLoadError('Unable to render PDF preview.');
   };
 
-  const handleRetakePhoto = () => {
-    if (cameraPreview?.previewUrl) {
-      URL.revokeObjectURL(cameraPreview.previewUrl);
-    }
-    setCameraPreview(null);
+  const goToPreviousPage = () => {
+    setPdfPageNumber(prev => Math.max(1, prev - 1));
   };
 
-  const handleSavePhoto = async () => {
-    if (!cameraPreview?.file) return;
-
-    setIsUploading(true);
-    try {
-      // Compress before upload
-      const compressed = await compressImage(cameraPreview.file, {
-        maxWidth: 1920,
-        maxHeight: 1920,
-        quality: 0.8
-      });
-
-      const results = await fileUploadService.uploadFiles(
-        [compressed],
-        user.uid,
-        'vaccine',
-        (index, progress) => {
-          setUploadProgress({ camera: progress });
-        }
-      );
-
-      setVaccineFiles(prev => [...prev, ...results]);
-
-      if (cameraPreview.previewUrl) {
-        URL.revokeObjectURL(cameraPreview.previewUrl);
-      }
-
-      setCameraPreview(null);
-      setUploadProgress({});
-      closeCamera();
-      alert('Photo uploaded successfully!');
-    } catch (error) {
-      console.error('Photo upload error:', error);
-      alert('Photo upload failed: ' + error.message);
-    }
-    setIsUploading(false);
+  const goToNextPage = () => {
+    if (!pdfNumPages) return;
+    setPdfPageNumber(prev => Math.min(pdfNumPages, prev + 1));
   };
+
 
   // Remove file
   const removeFile = async (index) => {
@@ -337,6 +358,17 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
 
   const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
   const vaccineIconSrc = `${process.env.PUBLIC_URL}/assets/icons/vaccination.svg`;
+  const uploadProgressValue = Object.values(uploadProgress)[0] || 0;
+  const isPdfPreview = previewFile && isPdfFileType(previewFile);
+  const isImagePreview = previewFile && !isPdfPreview && (
+    previewFile.type?.startsWith('image/') || previewFile.name?.match(/\.(jpg|jpeg|png|gif)$/i)
+  );
+  const previewFileSizeLabel = formatFileSize(previewFile?.size);
+  const canRenderPdf = isPdfPreview && pdfPreviewUrl && !pdfLoadError;
+  const pdfDownloadSourceAvailable = Boolean(
+    previewFile && (pdfPreviewUrl || previewFile.data || previewFile.url)
+  );
+  const pdfControlsDisabled = !pdfNumPages || isPdfLoading || !!pdfLoadError;
 
   return (
     <div className="page-background">
@@ -480,37 +512,19 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
                 multiple
               />
             </div>
-
-            <div className="divider-text">OR</div>
-
-            {/* Camera Scan */}
-            <div className="upload-option">
-              <h3 className="option-title">Scan with Camera</h3>
-              <p className="option-description">Clear, well-lit, no glare</p>
-              <button
-                className="upload-button"
-                onClick={startCamera}
-                disabled={isUploading}
-              >
-                Scan with Camera
-              </button>
-            </div>
           </div>
 
           {/* Upload Progress */}
           {Object.keys(uploadProgress).length > 0 && (
-            <div className="upload-progress-section">
-              <div className="progress-bar-container">
-                <div className="progress-bar-label">Uploading...</div>
-                <div className="progress-bar-track">
-                  <div
-                    className="progress-bar-fill"
-                    style={{ width: `${Object.values(uploadProgress)[0]}%` }}
-                  />
-                </div>
-                <div className="progress-bar-percent">
-                  {Math.round(Object.values(uploadProgress)[0])}%
-                </div>
+            <div className="upload-progress-container">
+              <div className="upload-progress-bar">
+                <div
+                  className="upload-progress-fill"
+                  style={{ width: `${uploadProgressValue}%` }}
+                />
+                <span className="upload-progress-text">
+                  {Math.round(uploadProgressValue)}%
+                </span>
               </div>
             </div>
           )}
@@ -532,7 +546,6 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
                     onDrop={(e) => handleDrop(e, index)}
                   >
                     <div className="file-info">
-                      <span className="file-number">#{index + 1}</span>
                       <span className="file-name">{file.name}</span>
                       <span className="file-size">
                         {(file.size / 1024).toFixed(1)} KB
@@ -544,7 +557,9 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
                         onClick={() => previewFileHandler(file)}
                         title="Preview"
                       >
-                        👁️
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M8 3C4.5 3 1.73 5.61 1 9c.73 3.39 3.5 6 7 6s6.27-2.61 7-6c-.73-3.39-3.5-6-7-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6.5c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5z" fill="currentColor"/>
+                        </svg>
                       </button>
                       <button
                         className="file-action-btn reupload-btn"
@@ -552,7 +567,9 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
                         disabled={isUploading}
                         title="Replace"
                       >
-                        🔄
+                        <svg width="10" height="10" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M11.94 2.06C10.68 0.79 8.93 0 7 0 3.13 0 0.01 3.13 0.01 7s3.12 7 6.99 7c3.27 0 5.99-2.23 6.76-5.25h-1.82c-.72 2.04-2.66 3.5-4.94 3.5-2.9 0-5.25-2.35-5.25-5.25S4.1 1.75 7 1.75c1.45 0 2.75.6 3.69 1.56L7.88 6.13h6.12V0l-2.06 2.06z" fill="currentColor"/>
+                        </svg>
                       </button>
                       <button
                         className="file-action-btn remove-btn"
@@ -560,7 +577,9 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
                         disabled={isUploading}
                         title="Remove"
                       >
-                        🗑️
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M4 14c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V6H4v8zM14 3h-3.5l-1-1h-3l-1 1H2v2h12V3z" fill="currentColor"/>
+                        </svg>
                       </button>
                     </div>
                   </li>
@@ -589,78 +608,114 @@ const VaccineEnhanced = ({ user, onNext, onBack, onLogout, initialFiles = [] }) 
         </div>
       </main>
 
-      {/* Camera Modal */}
-      {showCamera && (
-        <div className="camera-modal">
-          <div className="camera-container">
-            {cameraPreview ? (
-              <img
-                src={cameraPreview.previewUrl}
-                alt="Captured"
-                className="camera-preview"
-              />
-            ) : (
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="camera-video"
-              />
-            )}
-
-            <canvas ref={canvasRef} style={{ display: 'none' }} />
-
-            <div className="camera-controls">
-              {cameraPreview ? (
-                <>
-                  <button onClick={handleRetakePhoto} className="camera-btn retake-btn">
-                    Retake
-                  </button>
-                  <button
-                    onClick={handleSavePhoto}
-                    className="camera-btn save-btn"
-                    disabled={isUploading}
-                  >
-                    {isUploading ? 'Uploading...' : 'Save Photo'}
-                  </button>
-                  <button onClick={closeCamera} className="camera-btn cancel-btn">
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={capturePhoto} className="camera-btn capture-btn">
-                    Capture
-                  </button>
-                  <button onClick={closeCamera} className="camera-btn cancel-btn">
-                    Cancel
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* File Preview Modal */}
       {previewFile && (
         <div className="preview-modal" onClick={closePreview}>
           <div className="preview-container" onClick={(e) => e.stopPropagation()}>
-            <button className="preview-close" onClick={closePreview}>✕</button>
-            {previewFile.type?.startsWith('image/') || previewFile.name?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+            <div className="preview-top-actions">
+              <button className="preview-close" onClick={closePreview} aria-label="Close preview">
+                ✕
+              </button>
+              {isPdfPreview && (
+                <button
+                  className="preview-download-btn"
+                  onClick={handleDownloadPdf}
+                  disabled={!pdfDownloadSourceAvailable || isPdfLoading}
+                  aria-label="Download PDF"
+                >
+                  <svg
+                    className="preview-download-icon"
+                    viewBox="0 0 24 24"
+                    role="img"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 4v11.17l3.59-3.58L17 13l-5 5-5-5 1.41-1.41L11 15.17V4h1zM5 18h14v2H5z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {isImagePreview && (
               <img
                 src={previewFile.data || previewFile.url}
                 alt={previewFile.name}
                 className="preview-image"
               />
-            ) : previewFile.type === 'application/pdf' || previewFile.name?.endsWith('.pdf') ? (
-              <iframe
-                src={previewFile.data || previewFile.url}
-                title={previewFile.name}
-                className="preview-pdf"
-              />
-            ) : (
+            )}
+            {isPdfPreview && (
+              <div className="preview-pdf-wrapper">
+                <div className="preview-pdf-header">
+                  <div className="preview-pdf-meta">
+                    <p className="preview-pdf-title">{previewFile.name || 'PDF Document'}</p>
+                    {previewFileSizeLabel && (
+                      <p className="preview-pdf-subtitle">{previewFileSizeLabel}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="preview-pdf-frame">
+                  {isPdfLoading && (
+                    <div className="preview-pdf-placeholder">
+                      <p>Preparing PDF preview…</p>
+                    </div>
+                  )}
+                  {!isPdfLoading && pdfLoadError && (
+                    <div className="preview-pdf-placeholder">
+                      <p>{pdfLoadError}</p>
+                      <p>Please download the document to view it.</p>
+                    </div>
+                  )}
+                  {canRenderPdf && (
+                    <div className="preview-pdf-viewer">
+                      <Document
+                        file={pdfPreviewUrl}
+                        onLoadSuccess={handlePdfLoadSuccess}
+                        onLoadError={handlePdfLoadError}
+                        loading={<div className="preview-pdf-placeholder"><p>Rendering PDF…</p></div>}
+                        error={null}
+                      >
+                        <Page
+                          pageNumber={pdfPageNumber}
+                          className="preview-pdf-page"
+                          width={pdfPageWidth}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                        />
+                      </Document>
+                    </div>
+                  )}
+                  {!isPdfLoading && !pdfPreviewUrl && !pdfLoadError && (
+                    <div className="preview-pdf-placeholder">
+                      <p>PDF preview unavailable.</p>
+                      <p>Please download the document to view it.</p>
+                    </div>
+                  )}
+                </div>
+                {canRenderPdf && (
+                  <div className="preview-pdf-pagination">
+                    <button
+                      className="preview-pdf-page-btn"
+                      onClick={goToPreviousPage}
+                      disabled={pdfControlsDisabled || pdfPageNumber === 1}
+                    >
+                      {'<'}
+                    </button>
+                    <span className="preview-pdf-pagination-label">
+                      Page {pdfPageNumber} of {pdfNumPages || '—'}
+                    </span>
+                    <button
+                      className="preview-pdf-page-btn"
+                      onClick={goToNextPage}
+                      disabled={pdfControlsDisabled || pdfPageNumber === pdfNumPages}
+                    >
+                      {'>'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {!isImagePreview && !isPdfPreview && (
               <div className="preview-unsupported">
                 <p>Preview not available for this file type</p>
                 <p className="file-name">{previewFile.name}</p>
