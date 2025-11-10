@@ -1,0 +1,309 @@
+/* Measure.css - Carrier Dimensions Page Styles */
+
+/* ============
+   Card Header
+   ============ */
+
+.measure-card {
+  padding: 30px 0 30px 0 !important;
+  max-width: 540px;
+  align-items: stretch;
+  text-align: left;
+}
+
+.measure-card .card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 0 36px;
+}
+
+.measure-icon {
+  width: 49px;
+  height: 49px;
+  background: linear-gradient(315deg, rgba(230, 62, 111, 0.75) 0%, rgba(255, 107, 157, 0.75) 100%);
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.measure-icon img {
+  width: 28px;
+  height: 28px;
+}
+
+.card-title-section {
+  flex: 1;
+  text-align: left;
+}
+
+.measure-card .card-title {
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: -1.08px;
+  color: #000000;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.measure-card .card-subtitle {
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: -0.24px;
+  color: #6B7280;
+  margin: 4px 0 0 0;
+}
+
+/* Title Divider */
+.measure-card .title-divider {
+  height: 1px;
+  background: #E5E7EB;
+  margin: 20px 36px;
+}
+
+/* ===========
+   Info Banner
+   =========== */
+
+.info-banner {
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.08) 0%, rgba(255, 179, 209, 0.08) 100%);
+  border: 1px solid rgba(255, 107, 157, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 0 36px 20px 36px;
+}
+
+.info-text {
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #4B5563;
+  margin: 0;
+  line-height: 1.5;
+  letter-spacing: -0.26px;
+}
+
+.info-text strong {
+  font-weight: 700;
+  color: #FF6B9D;
+}
+
+/* ================
+   Dimension Inputs
+   ================ */
+
+.dimension-inputs {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  padding: 0 36px;
+}
+
+.dimension-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px 12px;
+  border: 2px solid #dbe7df;
+  border-radius: 18px;
+  background: #f7f9fb;
+  transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
+}
+
+.dimension-field.valid {
+  border-color: #34d399;
+  background: #f3fffb;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.14);
+}
+
+.dimension-field.invalid {
+  border-color: #f97373;
+  background: #fff6f6;
+}
+
+.dimension-label {
+  order: 2;
+  width: 100%;
+  text-align: center;
+}
+
+.label-text {
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.input-wrapper {
+  order: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 2px;
+  background: transparent;
+  padding: 0;
+  border: none;
+}
+
+.dimension-input {
+  border: none;
+  background: transparent;
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+  outline: none;
+  letter-spacing: -0.3px;
+  text-align: center;
+  padding: 0;
+  width: 100%;
+}
+
+.dimension-input::placeholder {
+  color: #c5ced6;
+}
+
+.input-unit {
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  flex-shrink: 0;
+}
+
+.check-icon {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  background: #10B981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.22);
+}
+
+.dimension-max {
+  order: 3;
+  width: 100%;
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #16a34a;
+  margin: 2px 0 0 0;
+  line-height: 1.3;
+  letter-spacing: -0.2px;
+  text-align: center;
+}
+
+.dimension-max.error {
+  color: #EF4444;
+  font-weight: 700;
+}
+
+/* ==============
+   Saving Indicator
+   ============== */
+
+.saving-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 36px;
+}
+
+.saving-dot {
+  width: 6px;
+  height: 6px;
+  background: #FF6B9D;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+.saving-text {
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  letter-spacing: -0.24px;
+}
+
+/* ==============
+   Action Buttons
+   ============== */
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 0 36px;
+}
+
+.continue-button {
+  order: 1;
+}
+
+.back-button {
+  order: 2;
+}
+
+/* =====================
+   Responsive Design
+   ===================== */
+
+@media (max-width: 390px) {
+  .dimension-inputs {
+    gap: 8px;
+  }
+
+  .dimension-input {
+    font-size: 20px;
+  }
+
+  .input-unit {
+    font-size: 14px;
+  }
+
+  .label-text {
+    font-size: 10px;
+  }
+
+  .label-max {
+    font-size: 9px;
+  }
+}
+
+@media (min-width: 428px) {
+  .dimension-inputs {
+    gap: 16px;
+  }
+}

@@ -10,10 +10,20 @@ const STORAGE_KEY_PREFIX = 'pet_passport_files_';
 const LOCAL_STORAGE_MAX_BYTES = 1024 * 1024; // keep cached payloads under ~1MB
 const DEFAULT_PET_ID = 'pet_default';
 
+const normalizePetId = (petId) => (petId && petId !== DEFAULT_PET_ID ? petId : null);
+
 class FileUploadService {
   constructor() {
     this.useFirebase = firebaseAvailable;
     this.fileCache = new Map(); // In-memory cache for uploaded files
+  }
+
+  _requirePetId(petId) {
+    const normalized = normalizePetId(petId);
+    if (!normalized) {
+      throw new Error('A valid petId is required before uploading files.');
+    }
+    return normalized;
   }
 
   /**
@@ -24,10 +34,11 @@ class FileUploadService {
    * @param {Function} onProgress - Progress callback (optional)
    * @returns {Promise<Array>} Array of uploaded file info
    */
-  async uploadFiles(files, userId, category = 'general', petId = DEFAULT_PET_ID, onProgress = null) {
+  async uploadFiles(files, userId, category = 'general', petId = null, onProgress = null) {
     const filesArray = Array.from(files);
+    const targetPetId = this._requirePetId(petId);
     const uploadPromises = filesArray.map((file, index) =>
-      this.uploadSingleFile(file, userId, category, petId, (progress) => {
+      this.uploadSingleFile(file, userId, category, targetPetId, (progress) => {
         if (onProgress) {
           onProgress(index, progress);
         }
@@ -52,7 +63,8 @@ class FileUploadService {
    * @param {Function} onProgress - Progress callback (optional)
    * @returns {Promise<object>} Uploaded file info
    */
-  async uploadSingleFile(file, userId, category, petId = DEFAULT_PET_ID, onProgress = null) {
+  async uploadSingleFile(file, userId, category, petId = null, onProgress = null) {
+    const targetPetId = this._requirePetId(petId);
     const fileId = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
 
     // Convert file to base64
@@ -67,7 +79,7 @@ class FileUploadService {
       data: base64Data, // base64 string
       uploadedAt: new Date().toISOString(),
       userId,
-      petId
+      petId: targetPetId
     };
 
     if (this.useFirebase) {
@@ -83,7 +95,7 @@ class FileUploadService {
           ...fileInfo,
           source: 'firestore'
         };
-        this._saveToLocalStorage(userId, petId, fileId, storedInfo);
+        this._saveToLocalStorage(userId, targetPetId, fileId, storedInfo);
 
         return storedInfo;
       } catch (error) {
@@ -93,7 +105,7 @@ class FileUploadService {
           ...fileInfo,
           source: 'local'
         };
-        this._saveToLocalStorage(userId, petId, fileId, storedInfo);
+        this._saveToLocalStorage(userId, targetPetId, fileId, storedInfo);
         return storedInfo;
       }
     } else {
@@ -102,7 +114,7 @@ class FileUploadService {
         ...fileInfo,
         source: 'local'
       };
-      this._saveToLocalStorage(userId, petId, fileId, storedInfo);
+      this._saveToLocalStorage(userId, targetPetId, fileId, storedInfo);
       return storedInfo;
     }
   }
@@ -165,14 +177,15 @@ class FileUploadService {
    * @param {string} category - File category
    * @returns {Promise<Array>} Array of uploaded file info
    */
-  async reUploadFiles(newFiles, existingFiles, userId, category, petId = DEFAULT_PET_ID) {
+  async reUploadFiles(newFiles, existingFiles, userId, category, petId = null) {
     console.log('Re-uploading files, existing count:', existingFiles.length);
 
     // Delete old files
     await this.deleteFiles(existingFiles, userId);
 
     // Upload new files
-    const newFileInfos = await this.uploadFiles(newFiles, userId, category, petId);
+    const targetPetId = this._requirePetId(petId);
+    const newFileInfos = await this.uploadFiles(newFiles, userId, category, targetPetId);
 
     console.log('Re-upload complete, new count:', newFileInfos.length);
     return newFileInfos;

@@ -340,7 +340,15 @@ const VaccineEnhanced = ({
         }
 
         // Upload new file
-        const petScope = fileToReupload.petId || activePet || DEFAULT_PET_ID;
+        const legacyPetId = fileToReupload.petId && fileToReupload.petId !== DEFAULT_PET_ID
+          ? fileToReupload.petId
+          : null;
+        const petScope = legacyPetId || activePet;
+        if (!petScope) {
+          alert('Select a pet profile before re-uploading documents.');
+          setIsUploading(false);
+          return;
+        }
         const results = await fileUploadService.uploadFiles(
           [fileToUpload],
           user.uid,
@@ -684,7 +692,7 @@ const VaccineEnhanced = ({
               onClick={onBack}
               disabled={isUploading}
             >
-              ← Back to Weight
+              ← Back to Measure
             </button>
           </div>
         </div>

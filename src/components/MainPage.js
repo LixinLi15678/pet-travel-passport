@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import PetsModal from './PetsModal';
-import { DEFAULT_PET_ID } from '../services/fileUploadService';
 import './shared.css';
 import './MainPage.css';
 
@@ -35,7 +34,7 @@ const MainPage = ({
       return 'Add a pet to continue';
     }
     const filesForPet = allFiles
-      .filter((file) => (file.petId || DEFAULT_PET_ID) === activePet)
+      .filter((file) => file.petId === activePet)
       .sort((a, b) => {
         const aTime = new Date(a.uploadedAt || 0).getTime();
         const bTime = new Date(b.uploadedAt || 0).getTime();

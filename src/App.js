@@ -3,6 +3,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './firebase/config';
 import Auth from './components/Auth';
 import MainPage from './components/MainPage';
+import Measure from './components/Measure';
 import Vaccine from './components/Vaccine';
 import userProgressService from './services/userProgressService';
 import fileUploadService, { DEFAULT_PET_ID } from './services/fileUploadService';
@@ -16,11 +17,13 @@ import './App.css';
  * 2. Data Management (CRUD operations)
  * 3. File Upload with base64 storage
  */
+const isLegacyPetId = (petId) => !petId || petId === DEFAULT_PET_ID;
+
 const buildPetProfiles = (progressPets = [], files = [], breederPets = []) => {
   const petMap = new Map();
 
   const upsertPet = (pet) => {
-    if (!pet?.id) return;
+    if (!pet?.id || isLegacyPetId(pet.id)) return;
     const existing = petMap.get(pet.id) || {};
     petMap.set(pet.id, {
       ...existing,
@@ -32,13 +35,14 @@ const buildPetProfiles = (progressPets = [], files = [], breederPets = []) => {
   breederPets.forEach(upsertPet);
 
   files.forEach((file) => {
-    const petId = file?.petId || DEFAULT_PET_ID;
-    if (!petMap.has(petId)) {
-      petMap.set(petId, {
-        id: petId,
-        createdAt: file?.uploadedAt || new Date().toISOString()
-      });
+    const petId = file?.petId;
+    if (!petId || isLegacyPetId(petId) || petMap.has(petId)) {
+      return;
     }
+    petMap.set(petId, {
+      id: petId,
+      createdAt: file?.uploadedAt || new Date().toISOString()
+    });
   });
 
   return Array.from(petMap.values());
@@ -48,7 +52,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showLoginTip, setShowLoginTip] = useState(false);
-  const [currentPage, setCurrentPage] = useState('main'); // 'main' or 'vaccine'
+  const [currentPage, setCurrentPage] = useState('main'); // 'main', 'measure', or 'vaccine'
   const [initialVaccineFiles, setInitialVaccineFiles] = useState([]);
   const [progressLoaded, setProgressLoaded] = useState(false);
   const [petProfiles, setPetProfiles] = useState([]);
@@ -124,7 +128,7 @@ function App() {
         setAllFiles(files);
         setInitialVaccineFiles(
           desiredPetId
-            ? files.filter((file) => (file.petId || DEFAULT_PET_ID) === desiredPetId)
+            ? files.filter((file) => file.petId === desiredPetId)
             : []
         );
 
@@ -174,6 +178,15 @@ function App() {
       alert('Please add a pet profile before continuing.');
       return;
     }
+    setCurrentPage('measure');
+    if (user) {
+      userProgressService.saveProgress(user.uid, { currentStep: 'measure' }).catch((error) => {
+        console.error('Failed to save progress:', error);
+      });
+    }
+  };
+
+  const handleMeasureNext = () => {
     setCurrentPage('vaccine');
     if (user) {
       userProgressService.saveProgress(user.uid, { currentStep: 'vaccine' }).catch((error) => {
@@ -182,14 +195,23 @@ function App() {
     }
   };
 
-  const handleBackToMain = () => {
-    setCurrentPage('main');
-    if (user) {
-      userProgressService.saveProgress(user.uid, { currentStep: 'main' }).catch((error) => {
-        console.error('Failed to save progress:', error);
-      });
-    }
-  };
+const handleMeasureBack = () => {
+  setCurrentPage('main');
+  if (user) {
+    userProgressService.saveProgress(user.uid, { currentStep: 'main' }).catch((error) => {
+      console.error('Failed to save progress:', error);
+    });
+  }
+};
+
+const handleVaccineBack = () => {
+  setCurrentPage('measure');
+  if (user) {
+    userProgressService.saveProgress(user.uid, { currentStep: 'measure' }).catch((error) => {
+      console.error('Failed to save progress:', error);
+    });
+  }
+};
 
   const handleVaccineNext = async (data) => {
     if (!user) return;
@@ -236,7 +258,7 @@ function App() {
     });
 
     const nextAllFiles = (() => {
-      const others = allFiles.filter((file) => (file.petId || DEFAULT_PET_ID) !== normalizedPetId);
+      const others = allFiles.filter((file) => file.petId !== normalizedPetId);
       return [...others, ...dedupedFiles];
     })();
     setAllFiles(nextAllFiles);
@@ -272,9 +294,46 @@ function App() {
     persistBreederSnapshot(petsForSave, nextAllFiles);
   }, [user, currentPage, activePetId, petProfiles, allFiles, persistBreederSnapshot]);
 
+  const handleDimensionsUpdate = useCallback((petId, newDimensions) => {
+    if (!petId || isLegacyPetId(petId)) {
+      return;
+    }
+
+    setPetProfiles((prevPets) => {
+      let found = false;
+      const updated = prevPets.map((pet) => {
+        if (pet.id === petId) {
+          found = true;
+          return {
+            ...pet,
+            dimensions: newDimensions
+          };
+        }
+        return pet;
+      });
+
+      if (!found) {
+        return [
+          ...updated,
+          {
+            id: petId,
+            createdAt: new Date().toISOString(),
+            dimensions: newDimensions
+          }
+        ];
+      }
+
+      return updated;
+    });
+  }, []);
+
   const handleDeletePet = useCallback(async (petId) => {
-    const targetPetId = petId || DEFAULT_PET_ID;
-    const filesForPet = allFiles.filter((file) => (file.petId || DEFAULT_PET_ID) === targetPetId);
+    if (!petId || isLegacyPetId(petId)) {
+      console.warn('Ignoring delete request for invalid pet id:', petId);
+      return;
+    }
+    const targetPetId = petId;
+    const filesForPet = allFiles.filter((file) => file.petId === targetPetId);
 
     if (user && filesForPet.length > 0) {
       try {
@@ -284,7 +343,7 @@ function App() {
       }
     }
 
-    const remainingFiles = allFiles.filter((file) => (file.petId || DEFAULT_PET_ID) !== targetPetId);
+    const remainingFiles = allFiles.filter((file) => file.petId !== targetPetId);
     setAllFiles(remainingFiles);
 
     let remainingPets = petProfiles.filter((pet) => pet.id !== targetPetId);
@@ -296,7 +355,7 @@ function App() {
     setActivePetId(nextActive);
 
     const nextFiles = nextActive
-      ? remainingFiles.filter((file) => (file.petId || DEFAULT_PET_ID) === nextActive)
+      ? remainingFiles.filter((file) => file.petId === nextActive)
       : [];
     setInitialVaccineFiles(nextFiles);
 
@@ -333,7 +392,7 @@ function App() {
     }
     setActivePetId(targetPetId);
     setInitialVaccineFiles(
-      allFiles.filter((file) => (file.petId || DEFAULT_PET_ID) === targetPetId)
+      allFiles.filter((file) => file.petId === targetPetId)
     );
 
     if (user) {
@@ -442,11 +501,25 @@ function App() {
           onDeletePet={handleDeletePet}
           allFiles={allFiles}
         />
+      ) : currentPage === 'measure' ? (
+        <Measure
+          user={user}
+          onNext={handleMeasureNext}
+          onBack={handleMeasureBack}
+          onLogout={handleLogout}
+          petProfiles={petProfiles}
+          activePetId={activePetId}
+          onPetChange={handlePetChange}
+          onAddPet={handleAddPet}
+          onDeletePet={handleDeletePet}
+          allFiles={allFiles}
+          onDimensionsUpdate={handleDimensionsUpdate}
+        />
       ) : (
         <Vaccine
           user={user}
           onNext={handleVaccineNext}
-          onBack={handleBackToMain}
+          onBack={handleVaccineBack}
           onLogout={handleLogout}
           initialFiles={initialVaccineFiles}
           onFilesChange={handleVaccineFilesChange}

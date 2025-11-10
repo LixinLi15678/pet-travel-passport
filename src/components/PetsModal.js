@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { DEFAULT_PET_ID } from '../services/fileUploadService';
 import './PetsModal.css';
 
 const formatDateLabel = (isoString) => {
@@ -46,9 +45,11 @@ const PetsModal = ({
   const pets = petProfiles.length > 0 ? petProfiles : [];
 
   const getFilesForPet = (petId) => {
-    const target = petId || DEFAULT_PET_ID;
+    if (!petId) {
+      return [];
+    }
     return allFiles
-      .filter((file) => (file.petId || DEFAULT_PET_ID) === target)
+      .filter((file) => file.petId === petId)
       .sort((a, b) => {
         const aTime = new Date(a.uploadedAt || 0).getTime();
         const bTime = new Date(b.uploadedAt || 0).getTime();
