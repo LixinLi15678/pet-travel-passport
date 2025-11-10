@@ -18,7 +18,7 @@ The Pet Travel Passport app now uses three Firestore collections:
 | --- | --- | --- | --- |
 | `id` | string | Yes | File identifier generated on upload (`{timestamp}_{sanitizedName}`) |
 | `userId` | string | Yes | Firebase Auth UID of the owner |
-| `petId` | string | Yes | Pet profile this file belongs to (`pet_default` or custom `pet_{timestamp}`) |
+| `petId` | string | Yes | Pet profile this file belongs to (must be a real `pet_{timestamp}` ID; legacy `pet_default` entries only exist on uploads made before 2025‑11‑10) |
 | `category` | string | Yes | Upload category (`"vaccine"` at the moment) |
 | `name` | string | Yes | Original filename |
 | `size` | number | Yes | Byte size of the file before base64 encoding |
@@ -56,7 +56,7 @@ Each document stores the current wizard step, which pet profile is active, and t
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `currentStep` | string | Yes | Current wizard step (`"main"`, `"vaccine"`, etc.) |
+| `currentStep` | string | Yes | Current wizard step (`"main"`, `"measure"`, `"vaccine"`) |
 | `activePetId` | string | Yes | Pet profile currently selected in the UI |
 | `pets` | array | Yes | List of pet profile metadata (see below) |
 | `lastFileIds` | array of strings | No | Snapshot of the most recent file IDs for the active pet |
@@ -71,6 +71,7 @@ Each document stores the current wizard step, which pet profile is active, and t
 | `id` | string | Yes | Unique pet identifier (`pet_{timestamp}`) |
 | `name` | string | No | User-provided pet name (required for new profiles, optional for legacy ones) |
 | `createdAt` | string (ISO 8601) | Yes | When the profile was created (or when the first file arrived) |
+| `dimensions` | object | No | Latest carrier measurements saved on the Measure page (`{ "length": "17", "width": "11", "height": "7.5" }`) |
 
 ### Example `userProgress` document
 
@@ -105,6 +106,8 @@ Each document stores the current wizard step, which pet profile is active, and t
 ## Relationships & Notes
 
 - Every document in `files` references exactly one pet via `petId`. Multiple pets simply mean multiple `petId` values for the same `userId`.
+- Legacy `pet_default` IDs may still exist in historical data, but the uploader now requires a real `pet_{timestamp}` ID before any new file is saved, preventing fresh “default” pets from reappearing.
+- Carrier measurements are stored inside each pet object in `userProgress.pets[].dimensions`, so downstream features (QR codes, admin exports, etc.) can read a single source of truth for length/width/height.
 - The UI’s **Pets** modal reads `userProgress/{uid}` to list pets, syncs pet names to `breeders/{uid}`, and then groups `files` client-side to show the documents per pet.
 - Because files are stored base64-encoded inside Firestore, keep an eye on document size limits (1 MiB). The frontend compresses images before upload and stores only small PDFs to stay within limits.
 - Local caching mirrors this schema: keys are built as `pet_passport_files_{userId}_{petId}_{fileId}` so offline mode can restore each pet’s files independently.
