@@ -4,6 +4,8 @@
 
 A mobile-friendly web application for pet travel passport generation.
 
+License: CC BY-NC 4.0 — Commercial use is prohibited.
+
 ## Core Features
 
 **Data Persistence**: Firebase Firestore + localStorage fallback
