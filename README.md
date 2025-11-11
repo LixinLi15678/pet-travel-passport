@@ -14,11 +14,13 @@ A mobile-first wizard for collecting the measurements, documents, and approvals 
   - [Architecture](#architecture)
   - [Data Model](#data-model)
   - [Quick Start](#quick-start)
+  - [Development Workflow](#development-workflow)
   - [Environment Variables](#environment-variables)
   - [Firebase Setup Checklist](#firebase-setup-checklist)
   - [Build \& Deployment](#build--deployment)
   - [Troubleshooting](#troubleshooting)
   - [Resources](#resources)
+  - [Attribution](#attribution)
   - [License](#license)
 
 ## Overview
@@ -37,13 +39,15 @@ The Pet Travel Passport flow mirrors the hand-off an airline agent expects:
 - **Accessibility & resiliency**: keyboard focus management in Auth screens, offline-friendly caching, and informative error states.
 
 ## Architecture
-- **React 18 + CRA**: `App.js` orchestrates auth state, page routing (`main`, `measure`, `vaccine`), and shared UI state.
+- **React 18 + CRA (TypeScript)**: `App.tsx` is the typed state machine that swaps between `main`, `measure`, and `vaccine`, wires Firebase auth, and hands strictly typed callbacks into each step component.
+- **Feature components**: `Auth.tsx`, `MainPage.tsx`, `Measure.tsx`, `Vaccine.tsx`, and `PetsModal.tsx` encapsulate UI logic while sharing `PetProfile`, `PetDimensions`, and `FileInfo` types from `src/types/index.ts`.
 - **Services layer**:  
-  - `userProgressService` (wizard state, dimensions, pets)  
-  - `fileUploadService` (base64 upload + cache + Firestore)  
-  - `breederService` (denormalized view for admin/export tooling)
+  - `userProgressService.ts` (wizard state, dimensions, pets)  
+  - `fileUploadService.ts` (base64 upload + cache + Firestore)  
+  - `breederService.ts` (denormalized view for admin/export tooling)
 - **Storage strategy**: Files are capped at Firestore’s 1 MiB limit, stored both remotely and in localStorage (`pet_passport_files_{uid}_{petId}_{fileId}`) for offline replay.
-- **Utilities**: `utils/imageCompression.js` downsizes images before saving; `react-pdf` + `pdfjs-dist` render previews directly in-browser.
+- **Shared types & config**: `tsconfig.json` enforces `strict` + `noEmit`, while `src/firebase/config.ts` centralizes Firebase initialization so services/components stay framework-agnostic.
+- **Utilities**: `utils/imageCompression.ts` downsizes images before saving; `react-pdf` + `pdfjs-dist` render previews directly in-browser.
 
 ```
 [Auth] ──▶ [App Shell] ──▶ { MainPage | Measure | Vaccine }
@@ -81,6 +85,20 @@ To use firebase feature, you need to create a project on firebase. Or you can us
    ```bash
    npm start
    ```
+4. **Type-check (optional)**
+   ```bash
+   npx tsc --noEmit
+   ```
+
+## Development Workflow
+
+| Command | Description |
+| --- | --- |
+| `npm start` | CRA dev server with TypeScript overlays and HMR. |
+| `npx tsc --noEmit` | Standalone type-check using `tsconfig.json`’s strict rules. |
+| `npm run build` | Production build (includes a type-check phase) into `build/`. |
+
+**Must run `npm run build` before push to GitHub**
 
 ## Environment Variables
 
@@ -118,7 +136,6 @@ Missing any of the above simply disables Firebase usage and keeps everything in 
 - `npm run deploy` – Publishes the `build/` folder to GitHub Pages via `gh-pages`.
 - The repository already ships with a `deploy.yml` GitHub Action badge (top of this README). Update `package.json#homepage` if you fork under a different user/org.
 
-
 ## Troubleshooting
 - **“Firebase configuration incomplete - using local storage fallback”** – Double-check `.env.local`. This warning is expected in offline demo mode.
 - **`auth/configuration-not-found`** – Enable Email/Password sign-in in Firebase Authentication.
@@ -128,8 +145,11 @@ Missing any of the above simply disables Firebase usage and keeps everything in 
 ## Resources
 - `docs/FIREBASE_SCHEMA.md` – Detailed description of every field stored in Firestore.
 
+## Attribution
+- Claude help refactor code from `js` to `tsx`
+
 ## License
 Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0). Commercial use is prohibited.
 
 ---
-**Last Updated**: 2025-11-10
+**Last Updated**: 2025-11-11

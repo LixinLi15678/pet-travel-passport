@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import PetsModal from './PetsModal';
+import { MainPageProps } from '../types';
 import './shared.css';
 import './MainPage.css';
 
 /**
  * Main Page - First page of Pet Travel Passport
  */
-const MainPage = ({
+const MainPage: React.FC<MainPageProps> = ({
   user,
   onLogout,
   showLoginTip,
@@ -19,9 +20,9 @@ const MainPage = ({
   onDeletePet,
   allFiles = []
 }) => {
-  const [showAccountPopup, setShowAccountPopup] = useState(false);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
-  const [showPetsModal, setShowPetsModal] = useState(false);
+  const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
+  const [dontShowAgain, setDontShowAgain] = useState<boolean>(false);
+  const [showPetsModal, setShowPetsModal] = useState<boolean>(false);
   const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
   const welcomeCatSrc = `${process.env.PUBLIC_URL}/assets/icons/icons8-cat-100.png`;
 
@@ -49,22 +50,23 @@ const MainPage = ({
     return `${date.toISOString().slice(0, 10)} ${pet?.name || 'CAT'}`;
   }, [activePet, allFiles, petProfiles]);
 
-  const handleOpenPetsModal = () => {
+  const handleOpenPetsModal = (): void => {
     setShowPetsModal(true);
     setShowAccountPopup(false);
   };
 
-  const handleClosePetsModal = () => {
+  const handleClosePetsModal = (): void => {
     setShowPetsModal(false);
   };
 
-  const handleSelectPet = (petId) => {
+  const handlePetChangeWithClose = (petId: string): void => {
     if (onPetChange) {
       onPetChange(petId);
     }
     setShowPetsModal(false);
     setShowAccountPopup(false);
   };
+
   return (
     <div className="page-background">
       <div className="page-header">
@@ -89,7 +91,7 @@ const MainPage = ({
                   >
                     <div
                       className="account-popup-content"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
                     >
                       <p className="account-email">{user.email}</p>
                       <button
@@ -165,7 +167,7 @@ const MainPage = ({
                 type="checkbox"
                 id="dontShowAgain"
                 checked={dontShowAgain}
-                onChange={(e) => setDontShowAgain(e.target.checked)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDontShowAgain(e.target.checked)}
               />
               <label htmlFor="dontShowAgain">Do not show again</label>
             </div>
@@ -257,7 +259,7 @@ const MainPage = ({
           onClose={handleClosePetsModal}
           petProfiles={petProfiles}
           activePetId={activePet}
-          onSelectPet={handleSelectPet}
+          onPetChange={handlePetChangeWithClose}
           onAddPet={onAddPet}
           onDeletePet={onDeletePet}
           allFiles={allFiles}

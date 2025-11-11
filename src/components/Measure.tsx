@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PetsModal from './PetsModal';
 import userProgressService from '../services/userProgressService';
+import { MeasureProps, PetDimensions } from '../types';
 import './shared.css';
 import './Measure.css';
 
@@ -11,7 +12,7 @@ import './Measure.css';
  * 2. Auto-save to Firebase on each input change
  * 3. Validation with hints for maximum dimensions
  */
-const Measure = ({
+const Measure: React.FC<MeasureProps> = ({
   user,
   onNext,
   onBack,
@@ -24,14 +25,18 @@ const Measure = ({
   allFiles = [],
   onDimensionsUpdate = () => {}
 }) => {
-  const [showAccountPopup, setShowAccountPopup] = useState(false);
-  const [showPetsModal, setShowPetsModal] = useState(false);
-  const [dimensions, setDimensions] = useState({
+  const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
+  const [showPetsModal, setShowPetsModal] = useState<boolean>(false);
+  const [dimensions, setDimensions] = useState<{
+    length: string;
+    width: string;
+    height: string;
+  }>({
     length: '',
     width: '',
     height: ''
   });
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const activePet = activePetId || petProfiles[0]?.id || null;
   const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
@@ -54,9 +59,9 @@ const Measure = ({
         const petData = progress?.pets?.find(p => p.id === activePet);
         if (petData?.dimensions) {
           setDimensions({
-            length: petData.dimensions.length || '',
-            width: petData.dimensions.width || '',
-            height: petData.dimensions.height || ''
+            length: petData.dimensions.length?.toString() || '',
+            width: petData.dimensions.width?.toString() || '',
+            height: petData.dimensions.height?.toString() || ''
           });
         } else {
           setDimensions({ length: '', width: '', height: '' });
@@ -70,7 +75,7 @@ const Measure = ({
   }, [user, activePet]);
 
   // Auto-save dimensions when they change
-  const saveDimensions = useCallback(async (newDimensions) => {
+  const saveDimensions = useCallback(async (newDimensions: { length: string; width: string; height: string }) => {
     if (!user || !activePet) return;
 
     setIsSaving(true);
@@ -78,13 +83,20 @@ const Measure = ({
       const progress = await userProgressService.getProgress(user.uid);
       const sourcePets = (progress?.pets?.length ? progress.pets : petProfiles) || [];
 
+      // Convert string dimensions to numbers for storage
+      const dimensionsToSave: PetDimensions = {
+        length: newDimensions.length ? parseFloat(newDimensions.length) : undefined,
+        width: newDimensions.width ? parseFloat(newDimensions.width) : undefined,
+        height: newDimensions.height ? parseFloat(newDimensions.height) : undefined
+      };
+
       let petFound = false;
       const updatedPets = sourcePets.map((pet) => {
         if (pet.id === activePet) {
           petFound = true;
           return {
             ...pet,
-            dimensions: newDimensions
+            dimensions: dimensionsToSave
           };
         }
         return pet;
@@ -98,7 +110,7 @@ const Measure = ({
             createdAt: new Date().toISOString()
           }),
           id: activePet,
-          dimensions: newDimensions
+          dimensions: dimensionsToSave
         });
       }
 
@@ -108,7 +120,7 @@ const Measure = ({
         currentStep: 'measure'
       });
 
-      onDimensionsUpdate(activePet, newDimensions);
+      onDimensionsUpdate(activePet, dimensionsToSave);
     } catch (error) {
       console.error('Failed to save dimensions:', error);
     } finally {
@@ -117,7 +129,7 @@ const Measure = ({
   }, [user, activePet, petProfiles, onDimensionsUpdate]);
 
   // Handle dimension input changes
-  const handleDimensionChange = (field, value) => {
+  const handleDimensionChange = (field: 'length' | 'width' | 'height', value: string) => {
     // Allow only numbers and decimals
     const sanitized = value.replace(/[^0-9.]/g, '');
     const newDimensions = {
@@ -129,23 +141,23 @@ const Measure = ({
   };
 
   // Check if dimension exceeds maximum
-  const isDimensionExceeded = (field) => {
+  const isDimensionExceeded = (field: 'length' | 'width' | 'height'): boolean => {
     const value = parseFloat(dimensions[field]);
     return !isNaN(value) && value > MAX_DIMENSIONS[field];
   };
 
   // Check if dimension is valid
-  const isDimensionValid = (field) => {
+  const isDimensionValid = (field: 'length' | 'width' | 'height'): boolean => {
     const value = parseFloat(dimensions[field]);
     return !isNaN(value) && value > 0 && value <= MAX_DIMENSIONS[field];
   };
 
   // Check if all dimensions are filled and valid
-  const canContinue = () => {
+  const canContinue = (): boolean => {
     return (
-      dimensions.length &&
-      dimensions.width &&
-      dimensions.height &&
+      dimensions.length !== '' &&
+      dimensions.width !== '' &&
+      dimensions.height !== '' &&
       isDimensionValid('length') &&
       isDimensionValid('width') &&
       isDimensionValid('height')
@@ -161,7 +173,7 @@ const Measure = ({
     setShowPetsModal(false);
   };
 
-  const handleSelectPet = (petId) => {
+  const handleSelectPet = (petId: string) => {
     if (onPetChange) {
       onPetChange(petId);
     }
@@ -175,7 +187,7 @@ const Measure = ({
       return;
     }
     if (onNext) {
-      onNext({ dimensions });
+      onNext();
     }
   };
 
@@ -209,7 +221,7 @@ const Measure = ({
                 >
                   <div
                     className="account-popup-content"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
                   >
                     <p className="account-email">{user.email}</p>
                     <button
@@ -307,7 +319,7 @@ const Measure = ({
                   inputMode="decimal"
                   className="dimension-input"
                   value={dimensions.length}
-                  onChange={(e) => handleDimensionChange('length', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleDimensionChange('length', e.target.value)}
                   placeholder="17.0"
                 />
                 <span className="input-unit">"</span>
@@ -332,7 +344,7 @@ const Measure = ({
                   inputMode="decimal"
                   className="dimension-input"
                   value={dimensions.width}
-                  onChange={(e) => handleDimensionChange('width', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleDimensionChange('width', e.target.value)}
                   placeholder="11.0"
                 />
                 <span className="input-unit">"</span>
@@ -357,7 +369,7 @@ const Measure = ({
                   inputMode="decimal"
                   className="dimension-input"
                   value={dimensions.height}
-                  onChange={(e) => handleDimensionChange('height', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleDimensionChange('height', e.target.value)}
                   placeholder="7.5"
                 />
                 <span className="input-unit">"</span>
@@ -408,6 +420,7 @@ const Measure = ({
           onClose={handleClosePetsModal}
           petProfiles={petProfiles}
           activePetId={activePet}
+          onPetChange={onPetChange}
           onSelectPet={handleSelectPet}
           onAddPet={onAddPet}
           onDeletePet={onDeletePet}

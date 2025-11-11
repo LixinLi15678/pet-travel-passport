@@ -1,8 +1,7 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import { PetsModalProps, PetProfile, FileInfo } from '../types';
 import './PetsModal.css';
 
-const formatDateLabel = (isoString) => {
+const formatDateLabel = (isoString: string | undefined): string => {
   if (!isoString) return 'Unknown date';
   const date = new Date(isoString);
   if (Number.isNaN(date.getTime())) {
@@ -15,7 +14,7 @@ const formatDateLabel = (isoString) => {
   });
 };
 
-const buildDisplayName = (files = [], pet) => {
+const buildDisplayName = (files: FileInfo[] = [], pet: PetProfile | undefined): string => {
   const referenceDate = files[0]?.uploadedAt || pet?.createdAt;
   if (!referenceDate) {
     return pet?.name || 'CAT';
@@ -29,22 +28,29 @@ const buildDisplayName = (files = [], pet) => {
   return `${datePart} ${petName}`;
 };
 
+interface ExtendedPetsModalProps extends PetsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectPet?: (petId: string) => void;
+}
+
 const PetsModal = ({
   isOpen,
   onClose,
   petProfiles = [],
   activePetId,
+  onPetChange,
   onSelectPet,
   onAddPet,
   onDeletePet,
   allFiles = []
-}) => {
+}: ExtendedPetsModalProps) => {
   if (!isOpen) return null;
 
   const resolvedActive = activePetId || petProfiles[0]?.id || null;
   const pets = petProfiles.length > 0 ? petProfiles : [];
 
-  const getFilesForPet = (petId) => {
+  const getFilesForPet = (petId: string | null): FileInfo[] => {
     if (!petId) {
       return [];
     }
@@ -57,7 +63,7 @@ const PetsModal = ({
       });
   };
 
-  const handleAddPet = async () => {
+  const handleAddPet = async (): Promise<void> => {
     if (!onAddPet) return;
     try {
       const newPetId = await onAddPet();
@@ -66,6 +72,8 @@ const PetsModal = ({
       }
       if (onSelectPet) {
         onSelectPet(newPetId);
+      } else if (onPetChange) {
+        onPetChange(newPetId);
       }
       onClose();
     } catch (error) {
@@ -73,14 +81,16 @@ const PetsModal = ({
     }
   };
 
-  const handleSelect = (petId) => {
+  const handleSelect = (petId: string): void => {
     if (onSelectPet) {
       onSelectPet(petId);
+    } else if (onPetChange) {
+      onPetChange(petId);
     }
     onClose();
   };
 
-  const handleDelete = async (petId, petNameLabel) => {
+  const handleDelete = async (petId: string, petNameLabel: string): Promise<void> => {
     if (!onDeletePet) return;
     const label = petNameLabel || 'this pet';
     if (!window.confirm(`Delete ${label}? All files inside will be removed.`)) {
@@ -89,18 +99,42 @@ const PetsModal = ({
     await onDeletePet(petId);
   };
 
+  const handleOverlayClick = (): void => {
+    onClose();
+  };
+
+  const handleModalClick = (e: React.MouseEvent<HTMLDivElement>): void => {
+    e.stopPropagation();
+  };
+
+  const handleCloseClick = (): void => {
+    onClose();
+  };
+
+  const handleAddPetClick = (): void => {
+    handleAddPet();
+  };
+
+  const handleSwitchClick = (petId: string) => (): void => {
+    handleSelect(petId);
+  };
+
+  const handleDeleteClick = (petId: string, displayName: string) => (): void => {
+    handleDelete(petId, displayName);
+  };
+
   return (
-    <div className="pets-modal-overlay" onClick={onClose}>
-      <div className="pets-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="pets-modal-overlay" onClick={handleOverlayClick}>
+      <div className="pets-modal" onClick={handleModalClick}>
         <div className="pets-modal-header">
           <h2>Pets</h2>
-          <button className="pets-close" onClick={onClose} aria-label="Close pet modal">
+          <button className="pets-close" onClick={handleCloseClick} aria-label="Close pet modal">
             ✕
           </button>
         </div>
         <p className="pets-modal-description">Switch between pet profiles to keep files organized.</p>
         <div className="pets-modal-actions">
-          <button className="add-pet-button" onClick={handleAddPet}>
+          <button className="add-pet-button" onClick={handleAddPetClick}>
             + Add Pet
           </button>
         </div>
@@ -108,7 +142,7 @@ const PetsModal = ({
           {pets.length === 0 ? (
             <div className="pet-empty-state">
               <p>No pets yet. Add a pet to get started.</p>
-              <button className="add-pet-button" onClick={handleAddPet}>
+              <button className="add-pet-button" onClick={handleAddPetClick}>
                 + Add Pet
               </button>
             </div>
@@ -136,14 +170,14 @@ const PetsModal = ({
                 <div className="pet-card-actions">
                   <button
                     className="pet-switch-button"
-                    onClick={() => handleSelect(pet.id)}
+                    onClick={handleSwitchClick(pet.id)}
                     disabled={pet.id === resolvedActive}
                   >
                     {pet.id === resolvedActive ? 'Selected' : 'Switch to this pet'}
                   </button>
                   <button
                     className="pet-delete-button"
-                    onClick={() => handleDelete(pet.id, displayName)}
+                    onClick={handleDeleteClick(pet.id, displayName)}
                     disabled={!onDeletePet}
                   >
                     Delete
@@ -156,26 +190,6 @@ const PetsModal = ({
       </div>
     </div>
   );
-};
-
-PetsModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  petProfiles: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    name: PropTypes.string,
-    createdAt: PropTypes.string
-  })),
-  activePetId: PropTypes.string,
-  onSelectPet: PropTypes.func,
-  onAddPet: PropTypes.func,
-  onDeletePet: PropTypes.func,
-  allFiles: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    name: PropTypes.string,
-    uploadedAt: PropTypes.string,
-    petId: PropTypes.string
-  }))
 };
 
 export default PetsModal;
