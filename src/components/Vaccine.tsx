@@ -6,6 +6,7 @@ import fileUploadService, { DEFAULT_PET_ID } from '../services/fileUploadService
 import { compressImage, isImageFile } from '../utils/imageCompression';
 import PetsModal from './PetsModal';
 import { VaccineProps, FileInfo } from '../types';
+import { openAdminConsole } from '../utils/adminAccess';
 import './shared.css';
 import './Vaccine.css';
 
@@ -28,7 +29,8 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
   onAddPet,
   onDeletePet,
   onUpdatePetType,
-  allFiles = []
+  allFiles = [],
+  isAdmin = false
 }) => {
   const [vaccineFiles, setVaccineFiles] = useState<FileInfo[]>(initialFiles);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
@@ -99,6 +101,11 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
     }
     setShowPetsModal(false);
     setShowAccountPopup(false);
+  };
+
+  const handleAdminConsoleOpen = () => {
+    setShowAccountPopup(false);
+    openAdminConsole();
   };
 
   useEffect(() => {
@@ -484,7 +491,17 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
                     className="account-popup-content"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <p className="account-email">{user.email}</p>
+                    <div className="account-popup-header">
+                      <p className="account-email">{user.email}</p>
+                      {isAdmin && (
+                        <button
+                          className="account-admin-tag"
+                          onClick={handleAdminConsoleOpen}
+                        >
+                          Admin Console
+                        </button>
+                      )}
+                    </div>
                     <button
                       className="popup-pets-button"
                       onClick={handleOpenPetsModal}

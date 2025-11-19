@@ -18,6 +18,7 @@ A mobile-first wizard for collecting the measurements, documents, and approvals 
   - [Environment Variables](#environment-variables)
   - [Firebase Setup Checklist](#firebase-setup-checklist)
   - [Build \& Deployment](#build--deployment)
+  - [Admin Console (personal tooling)](#admin-console-personal-tooling)
   - [Troubleshooting](#troubleshooting)
   - [Resources](#resources)
   - [Attribution](#attribution)
@@ -81,6 +82,11 @@ To use firebase feature, you need to create a project on firebase. Or you can us
    cp .env.example .env.local
    ```
    Fill `.env.local` with your Firebase web app keys.
+
+   (a) Go to: https://console.firebase.google.com/project/pet-travel-passport/settings/general/
+
+   (b) You can find all information you need in "PTP" Webapp.
+
 3. **Run the dev server**
    ```bash
    npm start
@@ -135,6 +141,9 @@ Missing any of the above simply disables Firebase usage and keeps everything in 
 - `npm run build` – Production build in `build/`.
 - `npm run deploy` – Publishes the `build/` folder to GitHub Pages via `gh-pages`.
 - The repository already ships with a `deploy.yml` GitHub Action badge (top of this README). Update `package.json#homepage` if you fork under a different user/org.
+
+## Admin Console (personal tooling)
+For my own testing I keep a standalone console (`public/admin-console.html`) that shares the same Firebase project. It lets me inspect `userProgress/files` and sync Auth accounts via `npm run sync-auth-users`. This tool isn’t required for the main workflow. (Lixin)
 
 ## Troubleshooting
 - **“Firebase configuration incomplete - using local storage fallback”** – Double-check `.env.local`. This warning is expected in offline demo mode.

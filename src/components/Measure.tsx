@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PetsModal from './PetsModal';
 import userProgressService from '../services/userProgressService';
 import { MeasureProps, PetDimensions } from '../types';
+import { openAdminConsole } from '../utils/adminAccess';
 import './shared.css';
 import './Measure.css';
 
@@ -24,7 +25,8 @@ const Measure: React.FC<MeasureProps> = ({
   onDeletePet,
   onUpdatePetType,
   allFiles = [],
-  onDimensionsUpdate = () => {}
+  onDimensionsUpdate = () => {},
+  isAdmin = false
 }) => {
   const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
   const [showPetsModal, setShowPetsModal] = useState<boolean>(false);
@@ -184,6 +186,11 @@ const Measure: React.FC<MeasureProps> = ({
     setShowAccountPopup(false);
   };
 
+  const handleAdminConsoleOpen = () => {
+    setShowAccountPopup(false);
+    openAdminConsole();
+  };
+
   const handleContinue = () => {
     if (!canContinue()) {
       alert('Please enter valid dimensions for all fields (within maximum limits)');
@@ -226,7 +233,17 @@ const Measure: React.FC<MeasureProps> = ({
                     className="account-popup-content"
                     onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
                   >
-                    <p className="account-email">{user.email}</p>
+                    <div className="account-popup-header">
+                      <p className="account-email">{user.email}</p>
+                      {isAdmin && (
+                        <button
+                          className="account-admin-tag"
+                          onClick={handleAdminConsoleOpen}
+                        >
+                          Admin Console
+                        </button>
+                      )}
+                    </div>
                     <button
                       className="popup-pets-button"
                       onClick={handleOpenPetsModal}

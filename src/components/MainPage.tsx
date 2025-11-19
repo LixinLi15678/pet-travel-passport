@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import PetsModal from './PetsModal';
 import { MainPageProps } from '../types';
+import { openAdminConsole } from '../utils/adminAccess';
 import './shared.css';
 import './MainPage.css';
 
@@ -19,7 +20,8 @@ const MainPage: React.FC<MainPageProps> = ({
   onAddPet,
   onDeletePet,
   onUpdatePetType,
-  allFiles = []
+  allFiles = [],
+  isAdmin = false
 }) => {
   const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
   const [dontShowAgain, setDontShowAgain] = useState<boolean>(false);
@@ -71,6 +73,11 @@ const MainPage: React.FC<MainPageProps> = ({
     setShowAccountPopup(false);
   };
 
+  const handleOpenAdminConsole = (): void => {
+    setShowAccountPopup(false);
+    openAdminConsole();
+  };
+
   return (
     <div className="page-background">
       <div className="page-header">
@@ -97,12 +104,22 @@ const MainPage: React.FC<MainPageProps> = ({
                       className="account-popup-content"
                       onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
                     >
+                    <div className="account-popup-header">
                       <p className="account-email">{user.email}</p>
-                      <button
-                        className="popup-pets-button"
-                        onClick={handleOpenPetsModal}
-                      >
-                        Pets
+                      {isAdmin && (
+                        <button
+                          className="account-admin-tag"
+                          onClick={handleOpenAdminConsole}
+                        >
+                          Admin Console
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      className="popup-pets-button"
+                      onClick={handleOpenPetsModal}
+                    >
+                      Pets
                       </button>
                       <button
                         className="popup-logout-button"

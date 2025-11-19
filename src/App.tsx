@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-import { auth } from './firebase/config';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from './firebase/config';
 import Auth from './components/Auth';
 import MainPage from './components/MainPage';
 import Measure from './components/Measure';
@@ -10,6 +11,7 @@ import fileUploadService, { DEFAULT_PET_ID } from './services/fileUploadService'
 import breederService from './services/breederService';
 import { PetProfile, FileInfo, PetDimensions } from './types';
 import './App.css';
+import { isAdminEmail } from './utils/adminAccess';
 
 /**
  * Main App Component - Pet Passport Management System
@@ -66,6 +68,7 @@ function App() {
   const [petProfiles, setPetProfiles] = useState<PetProfile[]>([]);
   const [activePetId, setActivePetId] = useState<string | null>(null);
   const [allFiles, setAllFiles] = useState<FileInfo[]>([]);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   const persistBreederSnapshot = useCallback((pets: PetProfile[], files: FileInfo[]) => {
     if (!user) return;
@@ -100,6 +103,24 @@ function App() {
     // Cleanup subscription
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const syncProfile = async () => {
+      if (!user || !db) return;
+      try {
+        await setDoc(doc(db, 'userProfiles', user.uid), {
+          email: user.email || null,
+          displayName: user.displayName || null,
+          photoURL: user.photoURL || null,
+          lastLoginAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (error) {
+        console.error('Failed to sync user profile:', error);
+      }
+    };
+
+    syncProfile();
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -169,6 +190,52 @@ function App() {
       isCancelled = true;
     };
   }, [user, persistBreederSnapshot]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const dbInstance = db;
+
+    const verifyAdminAccess = async () => {
+      if (!user) {
+        if (!cancelled) {
+          setIsAdmin(false);
+        }
+        return;
+      }
+
+      if (isAdminEmail(user.email)) {
+        if (!cancelled) {
+          setIsAdmin(true);
+        }
+        return;
+      }
+
+      if (!dbInstance) {
+        if (!cancelled) {
+          setIsAdmin(false);
+        }
+        return;
+      }
+
+      try {
+        const adminDoc = await getDoc(doc(dbInstance, 'adminUsers', user.uid));
+        if (!cancelled) {
+          setIsAdmin(adminDoc.exists());
+        }
+      } catch (error) {
+        console.error('Failed to verify admin access:', error);
+        if (!cancelled) {
+          setIsAdmin(false);
+        }
+      }
+    };
+
+    verifyAdminAccess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [db, user]);
 
   const handleAuthSuccess = (authenticatedUser: User) => {
     setUser(authenticatedUser);
@@ -564,6 +631,7 @@ function App() {
           onDeletePet={handleDeletePet}
           onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
+          isAdmin={isAdmin}
         />
       ) : currentPage === 'measure' ? (
         <Measure
@@ -579,6 +647,7 @@ function App() {
           onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
           onDimensionsUpdate={handleDimensionsUpdate}
+          isAdmin={isAdmin}
         />
       ) : (
         <Vaccine
@@ -595,6 +664,7 @@ function App() {
           onDeletePet={handleDeletePet}
           onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
+          isAdmin={isAdmin}
         />
       )}
     </div>

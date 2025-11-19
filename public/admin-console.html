@@ -1,0 +1,804 @@
+<!-- 
+Lixin: This script is used to manage the admin console for the Pet Passport project.
+Personally used
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Passport Admin Console</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f8f9fa;
+            color: #111827;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header,
+        .section,
+        .auth-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 12px 30px rgba(17, 24, 39, 0.08);
+            margin-bottom: 24px;
+        }
+
+        .auth-card {
+            max-width: 420px;
+            margin: 80px auto;
+            text-align: left;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #6b7280;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            border: none;
+            background: none;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            color: #ff6b9d;
+            border-bottom: 3px solid #ff6b9d;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #fff5f8;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 32px;
+            color: #ff6b9d;
+        }
+
+        .btn,
+        button {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .btn-primary {
+            background: #ff6b9d;
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(255, 107, 157, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .btn-danger {
+            background: #f87171;
+            color: #fff;
+        }
+
+        .btn + .btn {
+            margin-left: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 15px;
+        }
+
+        .list-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .loading,
+        .error,
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .pet-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .pet-type-tag {
+            background: rgba(255,107,157,0.12);
+            color: #ff3f81;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 20px;
+            max-width: 520px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-close {
+            border: none;
+            background: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #9ca3af;
+        }
+
+        .dimensions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .notice {
+            background: #fff3cd;
+            border: 1px solid #ffe69c;
+            color: #7c5b00;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div id="configWarning" class="notice" style="display: none; max-width: 520px; margin: 20px auto;">
+    Missing Firebase environment variables. Please ensure <code>.env.local</code> (or GitHub Secrets) defines
+    <code>REACT_APP_FIREBASE_*</code> values before running.
+</div>
+
+<div id="authSection" class="auth-card">
+    <h1 style="margin-bottom: 16px;">🔐 Admin Login</h1>
+    <p style="color: #6b7280; margin-bottom: 24px;">Use your Firebase admin account to access management tools.</p>
+    <div class="input-group">
+        <label for="adminEmail">Email</label>
+        <input type="email" id="adminEmail" placeholder="admin@example.com" autocomplete="username">
+    </div>
+    <div class="input-group">
+        <label for="adminPassword">Password</label>
+        <input type="password" id="adminPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" onclick="adminLogin()" style="width: 100%;">Login</button>
+    <div id="authError" style="margin-top: 16px; color: #b91c1c;"></div>
+</div>
+
+<div id="adminConsole" style="display: none;">
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h1>🐾 Pet Passport Admin</h1>
+                    <p>Manage users, pets, and uploaded files</p>
+                </div>
+                <button class="btn btn-danger" onclick="adminLogout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3 id="totalUsers">0</h3>
+                <p>Total Users</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="totalPets">0</h3>
+                <p>Total Pets</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="totalFiles">0</h3>
+                <p>Total Files</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(event, 'usersTab')">Users</button>
+                <button class="tab" onclick="switchTab(event, 'filesTab')">Files</button>
+                <button class="tab" onclick="switchTab(event, 'registeredTab')">Registered Users</button>
+            </div>
+
+            <div id="usersTab" class="tab-content">
+                <div style="margin-bottom: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="loadUsers()">Refresh Users</button>
+                    <button id="backToUsersBtn" class="btn btn-secondary" style="display: none;" onclick="backToUsersList()">Back to list</button>
+                </div>
+                <div id="usersLoading" class="loading" style="display: none;">Loading users...</div>
+                <div id="usersList"></div>
+                <div id="userDetailView" style="display: none;"></div>
+            </div>
+
+            <div id="filesTab" class="tab-content" style="display: none;">
+                <div style="margin-bottom: 16px;">
+                    <button class="btn btn-primary" onclick="loadAllFiles()">Refresh Files</button>
+                </div>
+                <div id="filesLoading" class="loading" style="display: none;">Loading files...</div>
+                <div id="filesList"></div>
+            </div>
+
+            <div id="registeredTab" class="tab-content" style="display: none;">
+                <div style="margin-bottom: 16px;">
+                    <button class="btn btn-primary" onclick="loadUsers()">Refresh Users</button>
+                </div>
+                <div id="registeredList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editPetModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Pet</h2>
+            <button class="modal-close" onclick="closeEditPetModal()">×</button>
+        </div>
+        <div class="input-group">
+            <label for="editPetName">Pet name</label>
+            <input type="text" id="editPetName" placeholder="e.g., Momo">
+        </div>
+        <div class="input-group">
+            <label for="editPetType">Pet type</label>
+            <select id="editPetType">
+                <option value="cat">Cat</option>
+                <option value="dog">Dog</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Carrier dimensions (inches)</label>
+            <div class="dimensions-grid">
+                <div>
+                    <label>Height</label>
+                    <input type="number" id="editPetHeight" min="0" step="0.1">
+                </div>
+                <div>
+                    <label>Width</label>
+                    <input type="number" id="editPetWidth" min="0" step="0.1">
+                </div>
+                <div>
+                    <label>Length</label>
+                    <input type="number" id="editPetLength" min="0" step="0.1">
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button class="btn btn-primary" style="flex: 1;" onclick="savePetEdit()">Save</button>
+            <button class="btn btn-secondary" style="flex: 1;" onclick="closeEditPetModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script src="./admin-console.config.js"></script>
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, collection, getDocs, doc, getDoc, deleteDoc, setDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    const firebaseConfig = window.ADMIN_CONSOLE_CONFIG;
+
+    if (!firebaseConfig) {
+        document.getElementById('configWarning').style.display = 'block';
+        throw new Error('Missing Firebase configuration values');
+    }
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.firebaseContext = { auth, db, signInWithEmailAndPassword, signOut, onAuthStateChanged, collection, getDocs, doc, getDoc, deleteDoc, setDoc, updateDoc };
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('adminConsole').style.display = 'block';
+            loadDashboard();
+        } else {
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('adminConsole').style.display = 'none';
+        }
+    });
+</script>
+
+<script>
+    let allUsers = [];
+    let allFiles = [];
+    let userProfilesMap = {};
+    let registeredUsers = [];
+    let currentViewUserId = null;
+    let currentEditPet = null;
+
+    const getCtx = () => window.firebaseContext;
+
+    async function adminLogin() {
+        const email = document.getElementById('adminEmail').value;
+        const password = document.getElementById('adminPassword').value;
+        const errorDiv = document.getElementById('authError');
+        errorDiv.textContent = '';
+        if (!email || !password) {
+            errorDiv.textContent = 'Email and password required.';
+            return;
+        }
+        try {
+            const { auth, signInWithEmailAndPassword } = getCtx();
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            errorDiv.textContent = error.message;
+        }
+    }
+
+    async function adminLogout() {
+        const { auth, signOut } = getCtx();
+        await signOut(auth);
+    }
+
+    function switchTab(event, id) {
+        document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+    }
+
+    async function loadDashboard() {
+        await Promise.all([loadUsers(), loadAllFiles()]);
+        updateStats();
+    }
+
+    function updateStats() {
+        document.getElementById('totalUsers').textContent = allUsers.length;
+        document.getElementById('totalFiles').textContent = allFiles.length;
+        const petTotal = allUsers.reduce((sum, user) => sum + (user.pets?.length || 0), 0);
+        document.getElementById('totalPets').textContent = petTotal;
+    }
+
+    async function loadUsers() {
+        const loading = document.getElementById('usersLoading');
+        const list = document.getElementById('usersList');
+        const detail = document.getElementById('userDetailView');
+        const backBtn = document.getElementById('backToUsersBtn');
+
+        detail.style.display = 'none';
+        list.style.display = 'block';
+        backBtn.style.display = 'none';
+        currentViewUserId = null;
+
+        loading.style.display = 'block';
+        list.innerHTML = '';
+
+        try {
+            const { db, collection, getDocs } = getCtx();
+            const snapshot = await getDocs(collection(db, 'userProgress'));
+            const profilesSnapshot = await getDocs(collection(db, 'userProfiles'));
+
+            userProfilesMap = {};
+            registeredUsers = [];
+            profilesSnapshot.forEach(profileDoc => {
+                const profileData = profileDoc.data();
+                userProfilesMap[profileDoc.id] = profileData;
+                registeredUsers.push({
+                    uid: profileDoc.id,
+                    email: profileData?.email || null,
+                    displayName: profileData?.displayName || null,
+                    lastLoginAt: profileData?.lastLoginAt || null
+                });
+            });
+            allUsers = [];
+            snapshot.forEach(doc => {
+                allUsers.push({ uid: doc.id, ...doc.data() });
+            });
+
+            if (allUsers.length === 0) {
+                list.innerHTML = '<div class="empty-state">No users yet.</div>';
+            } else {
+                list.innerHTML = allUsers.map(user => {
+                    const profile = userProfilesMap[user.uid];
+                    const identifier = profile?.email || user.uid;
+                    return `
+                    <div class="list-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3>${identifier}</h3>
+                                <p style="color:#6b7280">UID: ${user.uid}</p>
+                                <p style="color:#9ca3af">Pets: ${user.pets?.length || 0} • Last updated: ${user.lastUpdated ? new Date(user.lastUpdated).toLocaleString() : 'N/A'}</p>
+                            </div>
+                            <div>
+                                <button class="btn btn-primary" onclick="viewUserDetail('${user.uid}')">View</button>
+                                <button class="btn btn-danger" onclick="deleteUser('${user.uid}')">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `; }).join('');
+            }
+            updateStats();
+            renderRegisteredUsers();
+        } catch (error) {
+            list.innerHTML = `<div class="error">${error.message}</div>`;
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+
+    function renderRegisteredUsers() {
+        const list = document.getElementById('registeredList');
+        if (!list) return;
+
+        if (!registeredUsers.length) {
+            list.innerHTML = '<div class="empty-state">No registered users found.</div>';
+            return;
+        }
+
+        list.innerHTML = registeredUsers.map((profile) => {
+            const identifier = profile.email || 'No email';
+            return `
+                <div class="list-card">
+                    <h3>${identifier}</h3>
+                    <p style="color:#6b7280;">UID: ${profile.uid}</p>
+                    ${profile.displayName ? `<p style="color:#9ca3af;">Display Name: ${profile.displayName}</p>` : ''}
+                    <p style="color:#9ca3af;">Last Login: ${profile.lastLoginAt ? new Date(profile.lastLoginAt).toLocaleString() : 'Unknown'}</p>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function viewUserDetail(userId) {
+        const list = document.getElementById('usersList');
+        const detail = document.getElementById('userDetailView');
+        const backBtn = document.getElementById('backToUsersBtn');
+        const loading = document.getElementById('usersLoading');
+
+        currentViewUserId = userId;
+        list.style.display = 'none';
+        detail.style.display = 'block';
+        backBtn.style.display = 'inline-flex';
+        loading.style.display = 'block';
+
+        try {
+            const { db, doc, getDoc, collection, getDocs } = getCtx();
+            const progressDoc = await getDoc(doc(db, 'userProgress', userId));
+            const userData = progressDoc.exists() ? progressDoc.data() : {};
+            const profile = userProfilesMap[userId];
+            const identifier = profile?.email || userId;
+
+            const fileSnapshot = await getDocs(collection(db, 'files'));
+            const userFiles = [];
+            fileSnapshot.forEach(fileDoc => {
+                const data = fileDoc.data();
+                if (data.userId === userId) {
+                    userFiles.push({ docId: fileDoc.id, ...data });
+                }
+            });
+
+            detail.innerHTML = `
+                <div class="list-card" style="margin-bottom: 16px;">
+                    <h2>${identifier}</h2>
+                    <p style="color:#6b7280;">UID: ${userId}</p>
+                    <p style="color:#6b7280">Current Step: ${userData.currentStep || 'N/A'} • Active Pet: ${userData.activePetId || 'None'}</p>
+                </div>
+                <div class="list-card" style="margin-bottom: 16px;">
+                    <h3 style="margin-bottom: 8px;">Pet Profiles</h3>
+                    ${renderPetsSection(userId, userData.pets || [])}
+                </div>
+                <div class="list-card">
+                    <h3 style="margin-bottom: 8px;">Files</h3>
+                    ${renderFilesSection(userFiles)}
+                </div>
+                <div class="list-card" style="margin-top: 16px; border-color:#fecaca;">
+                    <h3 style="color:#b91c1c;">Danger Zone</h3>
+                    <p style="color:#6b7280;">Delete this user and all associated data.</p>
+                    <button class="btn btn-danger" onclick="deleteUser('${userId}')">Delete user</button>
+                </div>
+            `;
+        } catch (error) {
+            detail.innerHTML = `<div class="error">${error.message}</div>`;
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+
+    function renderPetsSection(userId, pets) {
+        if (!pets.length) {
+            return '<div class="empty-state">No pets</div>';
+        }
+        return pets.map(pet => {
+            const dims = pet.dimensions || {};
+            return `
+                <div class="list-card" style="border:1px solid #f3f4f6;">
+                    <div class="pet-card-header">
+                        <div>
+                            <h4>${pet.name || pet.id || 'Unnamed Pet'}</h4>
+                            <p style="color:#6b7280;">ID: ${pet.id}<br>Created: ${pet.createdAt ? new Date(pet.createdAt).toLocaleString() : 'N/A'}<br>Carrier: ${dims.height || 0}H × ${dims.width || 0}W × ${dims.length || 0}L in</p>
+                        </div>
+                        <span class="pet-type-tag">${(pet.type || 'cat').toUpperCase()}</span>
+                    </div>
+                    <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="openEditPetModal('${userId}', '${pet.id}')">Edit</button>
+                        <button class="btn btn-danger" onclick="deletePet('${userId}', '${pet.id}')">Delete</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderFilesSection(files) {
+        if (!files.length) {
+            return '<div class="empty-state">No files uploaded.</div>';
+        }
+        return files.map(file => {
+            const isImage = file.type?.startsWith('image/');
+            return `
+                <div class="list-card" style="border:1px solid #f3f4f6;">
+                    <h4>${file.name || 'Untitled file'}</h4>
+                    <p style="color:#6b7280;">Pet ID: ${file.petId || 'None'}<br>Type: ${file.type || 'N/A'}<br>Uploaded: ${file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : 'N/A'}</p>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-secondary" onclick="downloadFile('${file.docId}', '${file.name}', '${file.data || ''}')">Download</button>
+                        <button class="btn btn-danger" onclick="deleteFileAndRefresh('${file.docId}')">Delete</button>
+                    </div>
+                    ${isImage && file.data ? `<img src="${file.data}" alt="${file.name}" style="margin-top:12px; max-width:160px; border-radius:12px; border:1px solid #f3f4f6;">` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function backToUsersList() {
+        loadUsers();
+    }
+
+    function openEditPetModal(userId, petId) {
+        const user = allUsers.find(u => u.uid === userId);
+        if (!user) return;
+        const pet = user.pets?.find(p => p.id === petId);
+        if (!pet) return;
+        currentEditPet = { userId, petId };
+        document.getElementById('editPetName').value = pet.name || '';
+        document.getElementById('editPetType').value = pet.type || 'cat';
+        document.getElementById('editPetHeight').value = pet.dimensions?.height || '';
+        document.getElementById('editPetWidth').value = pet.dimensions?.width || '';
+        document.getElementById('editPetLength').value = pet.dimensions?.length || '';
+        document.getElementById('editPetModal').classList.add('active');
+    }
+
+    function closeEditPetModal() {
+        currentEditPet = null;
+        document.getElementById('editPetModal').classList.remove('active');
+    }
+
+    async function savePetEdit() {
+        if (!currentEditPet) return;
+        const name = document.getElementById('editPetName').value.trim();
+        const type = document.getElementById('editPetType').value || 'cat';
+        const height = parseFloat(document.getElementById('editPetHeight').value) || 0;
+        const width = parseFloat(document.getElementById('editPetWidth').value) || 0;
+        const length = parseFloat(document.getElementById('editPetLength').value) || 0;
+        try {
+            const { db, doc, getDoc, updateDoc } = getCtx();
+            const docRef = doc(db, 'userProgress', currentEditPet.userId);
+            const progress = await getDoc(docRef);
+            if (!progress.exists()) {
+                alert('User not found');
+                return;
+            }
+            const data = progress.data();
+            const pets = data.pets || [];
+            const updated = pets.map(pet => pet.id === currentEditPet.petId ? {
+                ...pet,
+                name: name || pet.name,
+                type,
+                dimensions: { height, width, length }
+            } : pet);
+            await updateDoc(docRef, { pets: updated, lastUpdated: new Date().toISOString() });
+            alert('Pet updated');
+            closeEditPetModal();
+            await loadUsers();
+            viewUserDetail(currentEditPet.userId);
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function deletePet(userId, petId) {
+        if (!confirm('Delete this pet and all files?')) return;
+        try {
+            const { db, doc, getDoc, updateDoc, collection, getDocs, deleteDoc } = getCtx();
+            const progressRef = doc(db, 'userProgress', userId);
+            const snapshot = await getDoc(progressRef);
+            if (snapshot.exists()) {
+                const data = snapshot.data();
+                const updatedPets = (data.pets || []).filter(p => p.id !== petId);
+                await updateDoc(progressRef, {
+                    pets: updatedPets,
+                    activePetId: data.activePetId === petId ? null : data.activePetId,
+                    lastUpdated: new Date().toISOString()
+                });
+            }
+            const filesSnap = await getDocs(collection(db, 'files'));
+            const deletes = [];
+            filesSnap.forEach(fileDoc => {
+                const data = fileDoc.data();
+                if (data.userId === userId && data.petId === petId) {
+                    deletes.push(deleteDoc(fileDoc.ref));
+                }
+            });
+            await Promise.all(deletes);
+            alert('Pet deleted');
+            loadUsers();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function deleteUser(userId) {
+        if (!confirm('Delete this user and ALL data?')) return;
+        try {
+            const { db, doc, deleteDoc, collection, getDocs } = getCtx();
+            const filesSnap = await getDocs(collection(db, 'files'));
+            const deletes = [];
+            filesSnap.forEach(fileDoc => {
+                if (fileDoc.data().userId === userId) {
+                    deletes.push(deleteDoc(fileDoc.ref));
+                }
+            });
+            await Promise.all(deletes);
+            await deleteDoc(doc(db, 'userProgress', userId));
+            try {
+                await deleteDoc(doc(db, 'breeders', userId));
+            } catch (_) {}
+            alert('User deleted');
+            loadDashboard();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function loadAllFiles() {
+        const loading = document.getElementById('filesLoading');
+        const list = document.getElementById('filesList');
+        loading.style.display = 'block';
+        list.innerHTML = '';
+        try {
+            const { db, collection, getDocs } = getCtx();
+            const snapshot = await getDocs(collection(db, 'files'));
+            allFiles = [];
+            snapshot.forEach(doc => allFiles.push({ docId: doc.id, ...doc.data() }));
+            if (!allFiles.length) {
+                list.innerHTML = '<div class="empty-state">No files found.</div>';
+            } else {
+                list.innerHTML = renderFilesSection(allFiles);
+            }
+            updateStats();
+        } catch (error) {
+            list.innerHTML = `<div class="error">${error.message}</div>`;
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+
+    function downloadFile(docId, name, data) {
+        if (!data) {
+            alert('File data missing.');
+            return;
+        }
+        const link = document.createElement('a');
+        link.href = data;
+        link.download = name || docId;
+        link.click();
+    }
+
+    async function deleteFileAndRefresh(fileId) {
+        if (!confirm('Delete this file?')) return;
+        try {
+            const { db, doc, deleteDoc } = getCtx();
+            await deleteDoc(doc(db, 'files', fileId));
+            alert('File deleted');
+            if (currentViewUserId) {
+                viewUserDetail(currentViewUserId);
+            }
+            loadAllFiles();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    window.adminLogin = adminLogin;
+    window.adminLogout = adminLogout;
+    window.switchTab = switchTab;
+    window.loadUsers = loadUsers;
+    window.backToUsersList = backToUsersList;
+    window.viewUserDetail = viewUserDetail;
+    window.deleteUser = deleteUser;
+    window.openEditPetModal = openEditPetModal;
+    window.closeEditPetModal = closeEditPetModal;
+    window.savePetEdit = savePetEdit;
+    window.deletePet = deletePet;
+    window.loadAllFiles = loadAllFiles;
+    window.downloadFile = downloadFile;
+    window.deleteFileAndRefresh = deleteFileAndRefresh;
+</script>
+</body>
+</html>

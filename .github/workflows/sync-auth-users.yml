@@ -1,0 +1,39 @@
+name: Sync Firebase Auth Users
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # UTC 03:00 every day
+  workflow_dispatch:
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Create service account file
+        run: |
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > service-account.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Generate admin console config
+        env:
+          REACT_APP_FIREBASE_API_KEY: ${{ secrets.REACT_APP_FIREBASE_API_KEY }}
+          REACT_APP_FIREBASE_AUTH_DOMAIN: ${{ secrets.REACT_APP_FIREBASE_AUTH_DOMAIN }}
+          REACT_APP_FIREBASE_PROJECT_ID: ${{ secrets.REACT_APP_FIREBASE_PROJECT_ID }}
+          REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ secrets.REACT_APP_FIREBASE_STORAGE_BUCKET }}
+          REACT_APP_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
+          REACT_APP_FIREBASE_APP_ID: ${{ secrets.REACT_APP_FIREBASE_APP_ID }}
+          REACT_APP_ADMIN_EMAILS: ${{ secrets.REACT_APP_ADMIN_EMAILS }}
+        run: npm run generate-admin-config
+
+      - name: Sync auth users
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ./service-account.json
+          FIREBASE_ADMIN_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: npm run sync-auth-users

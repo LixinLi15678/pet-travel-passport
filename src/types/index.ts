@@ -78,6 +78,7 @@ export interface MainPageProps {
   onDeletePet: (petId: string) => Promise<void>;
   onUpdatePetType: (petId: string, type: 'cat' | 'dog') => Promise<void>;
   allFiles: FileInfo[];
+  isAdmin?: boolean;
 }
 
 export interface MeasureProps {
@@ -93,6 +94,7 @@ export interface MeasureProps {
   onUpdatePetType: (petId: string, type: 'cat' | 'dog') => Promise<void>;
   allFiles: FileInfo[];
   onDimensionsUpdate: (petId: string, dimensions: PetDimensions) => void;
+  isAdmin?: boolean;
 }
 
 export interface VaccineProps {
@@ -109,6 +111,7 @@ export interface VaccineProps {
   onDeletePet: (petId: string) => Promise<void>;
   onUpdatePetType: (petId: string, type: 'cat' | 'dog') => Promise<void>;
   allFiles: FileInfo[];
+  isAdmin?: boolean;
 }
 
 export interface PetsModalProps {

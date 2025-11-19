@@ -7,6 +7,10 @@ config/production.json
 config/secrets.json
 firebase-adminsdk-*.json
 service-account-key.json
+service-account.json
+serviceAccount.json
+**/service-account*.json
+**/serviceAccount*.json
 
 # API keys and credentials
 **/api-keys.js
@@ -289,4 +293,4 @@ old/
 func.md
 .cla*
 HISTORY.md
-admin-console.html
+public/admin-console.config.js
