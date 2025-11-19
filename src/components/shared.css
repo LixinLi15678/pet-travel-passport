@@ -26,7 +26,7 @@
 }
 
 .header-content {
-  padding: 42px 28px 16px 28px;
+  padding: 26px 28px 10px 28px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -43,7 +43,7 @@
   font-size: 32px;
   letter-spacing: -0.64px;
   color: #000000;
-  margin: 0 0 8px 0;
+  margin: 0 0 0 0;
   line-height: 1.2;
 }
 
@@ -171,7 +171,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 22px 28px 18px 28px;
+  padding: 12px 28px 12px 28px;
   background: #FFFFFF;
   flex-shrink: 0;
 }
@@ -435,7 +435,7 @@
 
 @media (max-width: 390px) {
   .header-content {
-    padding: 32px 20px 12px 20px;
+    padding: 22px 20px 10px 20px;
   }
 
   .page-title {
@@ -443,7 +443,7 @@
   }
 
   .progress-section {
-    padding: 18px 20px 16px 20px;
+    padding: 10px 20px 10px 20px;
   }
 
   .step-divider {

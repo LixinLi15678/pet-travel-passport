@@ -153,7 +153,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
     }
   };
 
-  const catIllustration = `${process.env.PUBLIC_URL}/assets/icons/Cat.svg`;
+  const catIllustration = `${process.env.PUBLIC_URL}/assets/icons/cat-weight.svg`;
 
   // Password reset view
   if (showResetPassword) {
@@ -165,7 +165,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
               <div className="brand-icon-compact">
                 <img src={catIllustration} alt="Pet Passport" />
               </div>
-              <p className="brand-name">Pet Travel Passport</p>
+              <p className="brand-name">Pet Passport</p>
             </div>
             <p className="brand-tagline">Your pet's journey, simplified.</p>
           </div>
@@ -251,7 +251,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
             <div className="brand-icon-compact">
               <img src={catIllustration} alt="Pet Passport" />
             </div>
-            <p className="brand-name">Pet Travel Passport</p>
+            <p className="brand-name">Pet Passport</p>
           </div>
           <p className="brand-tagline">Your pet's journey, simplified.</p>
         </div>

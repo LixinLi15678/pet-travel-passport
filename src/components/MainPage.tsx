@@ -5,7 +5,7 @@ import './shared.css';
 import './MainPage.css';
 
 /**
- * Main Page - First page of Pet Travel Passport
+ * Main Page - First page of Pet Passport
  */
 const MainPage: React.FC<MainPageProps> = ({
   user,
@@ -18,15 +18,19 @@ const MainPage: React.FC<MainPageProps> = ({
   onPetChange,
   onAddPet,
   onDeletePet,
+  onUpdatePetType,
   allFiles = []
 }) => {
   const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
   const [dontShowAgain, setDontShowAgain] = useState<boolean>(false);
   const [showPetsModal, setShowPetsModal] = useState<boolean>(false);
-  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
-  const welcomeCatSrc = `${process.env.PUBLIC_URL}/assets/icons/icons8-cat-100.png`;
-
   const activePet = activePetId || petProfiles[0]?.id || null;
+  const activePetProfile = activePet ? petProfiles.find((p) => p.id === activePet) : null;
+  const activePetType = activePetProfile?.type === 'dog' ? 'dog' : 'cat';
+  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/${activePetType === 'dog' ? 'dog-login.svg' : 'cat-login.svg'}`;
+  const welcomePetSrc = `${process.env.PUBLIC_URL}/assets/icons/${activePetType === 'dog' ? 'dog-main.svg' : 'cat-main.png'}`;
+  const petGreeting = activePetType === 'dog' ? 'woof~' : 'meow~';
+  const petIconLabel = activePetType === 'dog' ? 'dog icon' : 'cat icon';
   const hasPets = petProfiles.length > 0;
 
   const currentPetName = useMemo(() => {
@@ -73,7 +77,7 @@ const MainPage: React.FC<MainPageProps> = ({
         {/* Header Section */}
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Travel Passport</h1>
+            <h1 className="page-title">Pet Passport</h1>
             <p className="page-subtitle">Verified check-in in 4 steps</p>
           </div>
             {user && (
@@ -160,7 +164,7 @@ const MainPage: React.FC<MainPageProps> = ({
           <div className="login-tip-modal">
             <h2>Welcome!</h2>
             <p>
-              To log out, tap the <span className="highlight-text">cat icon</span> in the top right, then choose logout from the menu.
+              To log out, tap the <span className="highlight-text">{petIconLabel}</span> in the top right, then choose logout from the menu.
             </p>
             <div className="tip-checkbox">
               <input
@@ -187,14 +191,14 @@ const MainPage: React.FC<MainPageProps> = ({
           {/* Cat Icon */}
           <div className="cat-icon">
             <img
-              src={welcomeCatSrc}
-              alt="Cat"
+              src={welcomePetSrc}
+              alt="Pet"
               className="cat-image"
             />
           </div>
 
           {/* Greeting */}
-          <p className="meow-text">meow~</p>
+          <p className="meow-text">{petGreeting}</p>
 
           {/* Welcome Title */}
           <h2 className="hero-title">Welcome!</h2>
@@ -262,6 +266,7 @@ const MainPage: React.FC<MainPageProps> = ({
           onPetChange={handlePetChangeWithClose}
           onAddPet={onAddPet}
           onDeletePet={onDeletePet}
+          onUpdatePetType={onUpdatePetType}
           allFiles={allFiles}
         />
       )}

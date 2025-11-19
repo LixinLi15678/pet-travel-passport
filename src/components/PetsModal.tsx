@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { PetsModalProps, PetProfile, FileInfo } from '../types';
 import './PetsModal.css';
 
@@ -43,12 +44,19 @@ const PetsModal = ({
   onSelectPet,
   onAddPet,
   onDeletePet,
+  onUpdatePetType,
   allFiles = []
 }: ExtendedPetsModalProps) => {
-  if (!isOpen) return null;
-
   const resolvedActive = activePetId || petProfiles[0]?.id || null;
   const pets = petProfiles.length > 0 ? petProfiles : [];
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newPetName, setNewPetName] = useState('');
+  const [newPetType, setNewPetType] = useState<'cat' | 'dog'>('cat');
+  const [addError, setAddError] = useState('');
+  const [addPending, setAddPending] = useState(false);
+
+  if (!isOpen) return null;
 
   const getFilesForPet = (petId: string | null): FileInfo[] => {
     if (!petId) {
@@ -65,9 +73,17 @@ const PetsModal = ({
 
   const handleAddPet = async (): Promise<void> => {
     if (!onAddPet) return;
+    const name = newPetName.trim();
+    if (!name) {
+      setAddError('Name is required');
+      return;
+    }
+    setAddPending(true);
+    setAddError('');
     try {
-      const newPetId = await onAddPet();
+      const newPetId = await onAddPet({ name, type: newPetType });
       if (!newPetId) {
+        setAddError('Failed to create pet. Please try again.');
         return;
       }
       if (onSelectPet) {
@@ -75,9 +91,15 @@ const PetsModal = ({
       } else if (onPetChange) {
         onPetChange(newPetId);
       }
+      setShowAddModal(false);
+      setNewPetName('');
+      setNewPetType('cat');
       onClose();
     } catch (error) {
       console.error('Failed to add pet profile:', error);
+      setAddError('Failed to create pet. Please try again.');
+    } finally {
+      setAddPending(false);
     }
   };
 
@@ -112,7 +134,7 @@ const PetsModal = ({
   };
 
   const handleAddPetClick = (): void => {
-    handleAddPet();
+    setShowAddModal(true);
   };
 
   const handleSwitchClick = (petId: string) => (): void => {
@@ -138,6 +160,66 @@ const PetsModal = ({
             + Add Pet
           </button>
         </div>
+        {showAddModal && (
+          <div className="add-pet-modal">
+            <div className="add-pet-row">
+              <label className="add-pet-label" htmlFor="new-pet-name">Pet name</label>
+              <input
+                id="new-pet-name"
+                className="add-pet-input"
+                value={newPetName}
+                onChange={(e) => setNewPetName(e.target.value)}
+                placeholder="e.g., Momo"
+                disabled={addPending}
+              />
+            </div>
+            <div className="add-pet-row">
+              <span className="add-pet-label">Type</span>
+              <div className="pet-type-toggle-group">
+                <button
+                  type="button"
+                  className={`pet-type-choice ${newPetType === 'cat' ? 'active' : ''}`}
+                  onClick={() => setNewPetType('cat')}
+                  disabled={addPending}
+                >
+                  Cat
+                </button>
+                <button
+                  type="button"
+                  className={`pet-type-choice ${newPetType === 'dog' ? 'active' : ''}`}
+                  onClick={() => setNewPetType('dog')}
+                  disabled={addPending}
+                >
+                  Dog
+                </button>
+              </div>
+            </div>
+            {addError && <div className="add-pet-error">{addError}</div>}
+            <div className="add-pet-actions">
+              <button
+                type="button"
+                className="add-pet-cancel"
+                onClick={() => {
+                  setShowAddModal(false);
+                  setAddError('');
+                  setNewPetName('');
+                  setNewPetType('cat');
+                }}
+                disabled={addPending}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="add-pet-save"
+                onClick={handleAddPet}
+                disabled={addPending}
+              >
+                {addPending ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        )}
         <div className="pets-list">
           {pets.length === 0 ? (
             <div className="pet-empty-state">
@@ -149,6 +231,7 @@ const PetsModal = ({
           ) : pets.map((pet) => {
             const filesForPet = getFilesForPet(pet.id);
             const displayName = buildDisplayName(filesForPet, pet);
+            const petType = pet.type === 'dog' ? 'dog' : 'cat';
             return (
               <div className={`pet-card ${pet.id === resolvedActive ? 'active' : ''}`} key={pet.id}>
                 <div className="pet-card-header">
@@ -156,7 +239,18 @@ const PetsModal = ({
                     <h3>{displayName}</h3>
                     <span className="pet-card-meta">{filesForPet.length} file(s)</span>
                   </div>
-                  {pet.id === resolvedActive && <span className="pet-pill">Current</span>}
+                  <div className="pet-card-header-actions">
+                    {onUpdatePetType && (
+                      <button
+                        className={`pet-type-toggle ${petType}`}
+                        onClick={() => onUpdatePetType(pet.id, petType === 'dog' ? 'cat' : 'dog')}
+                        type="button"
+                      >
+                        {petType === 'dog' ? 'Dog' : 'Cat'}
+                      </button>
+                    )}
+                    {pet.id === resolvedActive && <span className="pet-pill">Current</span>}
+                  </div>
                 </div>
                 <ul className="pet-file-list">
                   {filesForPet.length === 0 && <li className="pet-file-empty">No files yet.</li>}

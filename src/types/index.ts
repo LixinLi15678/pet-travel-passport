@@ -5,6 +5,7 @@ export interface PetProfile {
   id: string;
   name?: string;
   createdAt: string;
+  type?: 'cat' | 'dog';
   dimensions?: PetDimensions;
 }
 
@@ -73,8 +74,9 @@ export interface MainPageProps {
   petProfiles: PetProfile[];
   activePetId: string | null;
   onPetChange: (petId: string) => void;
-  onAddPet: () => Promise<string | null>;
+  onAddPet: (pet: { name: string; type: 'cat' | 'dog' }) => Promise<string | null>;
   onDeletePet: (petId: string) => Promise<void>;
+  onUpdatePetType: (petId: string, type: 'cat' | 'dog') => Promise<void>;
   allFiles: FileInfo[];
 }
 
@@ -86,8 +88,9 @@ export interface MeasureProps {
   petProfiles: PetProfile[];
   activePetId: string | null;
   onPetChange: (petId: string) => void;
-  onAddPet: () => Promise<string | null>;
+  onAddPet: (pet: { name: string; type: 'cat' | 'dog' }) => Promise<string | null>;
   onDeletePet: (petId: string) => Promise<void>;
+  onUpdatePetType: (petId: string, type: 'cat' | 'dog') => Promise<void>;
   allFiles: FileInfo[];
   onDimensionsUpdate: (petId: string, dimensions: PetDimensions) => void;
 }
@@ -102,8 +105,9 @@ export interface VaccineProps {
   petProfiles: PetProfile[];
   activePetId: string | null;
   onPetChange: (petId: string) => void;
-  onAddPet: () => Promise<string | null>;
+  onAddPet: (pet: { name: string; type: 'cat' | 'dog' }) => Promise<string | null>;
   onDeletePet: (petId: string) => Promise<void>;
+  onUpdatePetType: (petId: string, type: 'cat' | 'dog') => Promise<void>;
   allFiles: FileInfo[];
 }
 
@@ -111,8 +115,9 @@ export interface PetsModalProps {
   petProfiles: PetProfile[];
   activePetId: string | null;
   onPetChange: (petId: string) => void;
-  onAddPet: () => Promise<string | null>;
+  onAddPet: (pet: { name: string; type: 'cat' | 'dog' }) => Promise<string | null>;
   onDeletePet: (petId: string) => Promise<void>;
+  onUpdatePetType: (petId: string, type: 'cat' | 'dog') => Promise<void>;
   allFiles: FileInfo[];
 }
 

@@ -22,6 +22,7 @@ const Measure: React.FC<MeasureProps> = ({
   onPetChange,
   onAddPet,
   onDeletePet,
+  onUpdatePetType,
   allFiles = [],
   onDimensionsUpdate = () => {}
 }) => {
@@ -39,7 +40,9 @@ const Measure: React.FC<MeasureProps> = ({
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const activePet = activePetId || petProfiles[0]?.id || null;
-  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
+  const activePetProfile = activePet ? petProfiles.find((pet) => pet.id === activePet) : null;
+  const activePetType = activePetProfile?.type === 'dog' ? 'dog' : 'cat';
+  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/${activePetType === 'dog' ? 'dog-login.svg' : 'cat-login.svg'}`;
   const dimensionIconSrc = `${process.env.PUBLIC_URL}/assets/icons/dimensions.svg`;
 
   // Maximum dimensions (in inches)
@@ -203,7 +206,7 @@ const Measure: React.FC<MeasureProps> = ({
       <div className="page-header">
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Travel Passport</h1>
+            <h1 className="page-title">Pet Passport</h1>
             <p className="page-subtitle">Measure carrier dimensions</p>
           </div>
           {user && (
@@ -424,6 +427,7 @@ const Measure: React.FC<MeasureProps> = ({
           onSelectPet={handleSelectPet}
           onAddPet={onAddPet}
           onDeletePet={onDeletePet}
+          onUpdatePetType={onUpdatePetType}
           allFiles={allFiles}
         />
       )}

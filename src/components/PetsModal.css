@@ -90,9 +90,40 @@
   align-items: center;
 }
 
+.pet-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .pet-card-meta {
   font-size: 0.85rem;
   color: #6b7280;
+}
+
+.pet-type-toggle {
+  border: 1px solid #E6E7EB;
+  background: #F8F9FA;
+  color: #374151;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.pet-type-toggle.cat {
+  border-color: #FFB3D1;
+  color: #FF6B9D;
+}
+
+.pet-type-toggle.dog {
+  border-color: #60A5FA;
+  color: #2563EB;
+}
+
+.pet-type-toggle:hover {
+  transform: translateY(-1px);
 }
 
 .pet-pill {
@@ -174,4 +205,87 @@
 .pet-delete-button {
   border-color: #F87171;
   color: #DC2626;
+}
+
+.add-pet-modal {
+  border: 1px solid #f0f0f0;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #FBFBFB;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.add-pet-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-pet-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.add-pet-input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  font-size: 1rem;
+}
+
+.pet-type-toggle-group {
+  display: inline-flex;
+  border: 1px solid #E6E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.pet-type-choice {
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 700;
+  color: #6B7280;
+  transition: all 150ms ease;
+}
+
+.pet-type-choice.active {
+  background: #FFEEF5;
+  color: #FF6B9D;
+}
+
+.pet-type-choice:last-child {
+  border-left: 1px solid #E6E7EB;
+}
+
+.add-pet-error {
+  color: #DC2626;
+  font-weight: 600;
+}
+
+.add-pet-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.add-pet-cancel,
+.add-pet-save {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #E6E7EB;
+  background: white;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.add-pet-save {
+  background: linear-gradient(90deg, #FF6B9D 0%, #E63E6F 100%);
+  color: white;
+  border: none;
 }

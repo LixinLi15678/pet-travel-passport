@@ -12,7 +12,7 @@ import { PetProfile, FileInfo, PetDimensions } from './types';
 import './App.css';
 
 /**
- * Main App Component - Pet Travel Passport Management System
+ * Main App Component - Pet Passport Management System
  * Features:
  * 1. User Authentication (Email/Password)
  * 2. Data Management (CRUD operations)
@@ -48,7 +48,8 @@ const buildPetProfiles = (
     }
     petMap.set(petId, {
       id: petId,
-      createdAt: file?.uploadedAt || new Date().toISOString()
+      createdAt: file?.uploadedAt || new Date().toISOString(),
+      type: 'cat'
     });
   });
 
@@ -279,11 +280,16 @@ function App() {
       setInitialVaccineFiles(dedupedFiles);
     }
 
+    const defaultNewPetType = (
+      petProfiles.find((pet) => pet.id === activePetId) || petProfiles[0]
+    )?.type || 'cat';
+
     let updatedPets = petProfiles;
     if (!petProfiles.some((pet) => pet.id === normalizedPetId)) {
       const newPet: PetProfile = {
         id: normalizedPetId,
-        createdAt: dedupedFiles[0]?.uploadedAt || new Date().toISOString()
+        createdAt: dedupedFiles[0]?.uploadedAt || new Date().toISOString(),
+        type: defaultNewPetType
       };
       updatedPets = [...petProfiles, newPet];
       setPetProfiles(updatedPets);
@@ -325,11 +331,13 @@ function App() {
       });
 
       if (!found) {
+        const fallbackType = prevPets.find((pet) => pet.id === petId)?.type || 'cat';
         return [
           ...updated,
           {
             id: petId,
             createdAt: new Date().toISOString(),
+            type: fallbackType,
             dimensions: newDimensions
           }
         ];
@@ -418,25 +426,21 @@ function App() {
     }
   }, [activePetId, allFiles, currentPage, petProfiles, user]);
 
-  const handleAddPet = useCallback(async (): Promise<string | null> => {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-    const nameInput = window.prompt('Give your pet a name:');
-    if (nameInput === null) {
-      return null;
-    }
-    const trimmedName = nameInput.trim();
+  const handleAddPet = useCallback(async (pet: { name: string; type: 'cat' | 'dog' }): Promise<string | null> => {
+    const trimmedName = pet?.name?.trim();
     if (!trimmedName) {
       window.alert('Pet name is required.');
       return null;
     }
 
+    const petType: 'cat' | 'dog' = pet?.type === 'dog' ? 'dog' : 'cat';
+
     const newPetId = `pet_${Date.now()}`;
     const newPet: PetProfile = {
       id: newPetId,
       name: trimmedName,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      type: petType
     };
     const updatedPets = [...petProfiles, newPet];
     setPetProfiles(updatedPets);
@@ -461,6 +465,51 @@ function App() {
 
     return newPetId;
   }, [allFiles, currentPage, petProfiles, persistBreederSnapshot, user]);
+
+  const handleUpdatePetType = useCallback(async (petId: string, type: 'cat' | 'dog') => {
+    if (!petId || isLegacyPetId(petId)) {
+      return;
+    }
+    let nextPets: PetProfile[] = [];
+    setPetProfiles((prevPets) => {
+      let found = false;
+      const updated = prevPets.map((pet) => {
+        if (pet.id === petId) {
+          found = true;
+          return { ...pet, type };
+        }
+        return pet;
+      });
+      if (!found) {
+        nextPets = [
+          ...updated,
+          {
+            id: petId,
+            createdAt: new Date().toISOString(),
+            type
+          }
+        ];
+        return nextPets;
+      }
+      nextPets = updated;
+      return updated;
+    });
+
+    if (nextPets.length === 0) {
+      nextPets = petProfiles.map((pet) => (pet.id === petId ? { ...pet, type } : pet));
+    }
+
+    if (user) {
+      userProgressService.saveProgress(user.uid, {
+        pets: nextPets,
+        activePetId,
+        currentStep: currentPage
+      }).catch((error) => {
+        console.error('Failed to save pet type update:', error);
+      });
+    }
+    persistBreederSnapshot(nextPets, allFiles);
+  }, [activePetId, allFiles, currentPage, petProfiles, persistBreederSnapshot, user]);
 
   const handleLogout = async () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -513,6 +562,7 @@ function App() {
           onPetChange={handlePetChange}
           onAddPet={handleAddPet}
           onDeletePet={handleDeletePet}
+          onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
         />
       ) : currentPage === 'measure' ? (
@@ -526,6 +576,7 @@ function App() {
           onPetChange={handlePetChange}
           onAddPet={handleAddPet}
           onDeletePet={handleDeletePet}
+          onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
           onDimensionsUpdate={handleDimensionsUpdate}
         />
@@ -542,6 +593,7 @@ function App() {
           onPetChange={handlePetChange}
           onAddPet={handleAddPet}
           onDeletePet={handleDeletePet}
+          onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
         />
       )}

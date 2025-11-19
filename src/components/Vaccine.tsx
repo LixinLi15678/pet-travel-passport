@@ -27,6 +27,7 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
   onPetChange,
   onAddPet,
   onDeletePet,
+  onUpdatePetType,
   allFiles = []
 }) => {
   const [vaccineFiles, setVaccineFiles] = useState<FileInfo[]>(initialFiles);
@@ -46,6 +47,9 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const activePet = activePetId || petProfiles[0]?.id || null;
+  const activePetProfile = activePet ? petProfiles.find((pet) => pet.id === activePet) : null;
+  const activePetType = activePetProfile?.type === 'dog' ? 'dog' : 'cat';
+  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/${activePetType === 'dog' ? 'dog-login.svg' : 'cat-login.svg'}`;
 
   const updateFiles = useCallback(
     (updater: FileInfo[] | ((prev: FileInfo[]) => FileInfo[])) => {
@@ -441,7 +445,6 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
     await onNext({ vaccineFiles });
   };
 
-  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
   const vaccineIconSrc = `${process.env.PUBLIC_URL}/assets/icons/vaccination.svg`;
   const uploadProgressValue = Object.values(uploadProgress)[0] || 0;
   const isPdfPreview = previewFile && isPdfFileType(previewFile);
@@ -461,7 +464,7 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
       <div className="page-header">
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Travel Passport</h1>
+            <h1 className="page-title">Pet Passport</h1>
             <p className="page-subtitle">Vaccine verification</p>
           </div>
           {user && (
@@ -715,6 +718,7 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
           onSelectPet={handleSelectPetProfile}
           onAddPet={onAddPet}
           onDeletePet={onDeletePet}
+          onUpdatePetType={onUpdatePetType}
           allFiles={allFiles}
         />
       )}
