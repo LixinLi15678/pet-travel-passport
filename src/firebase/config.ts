@@ -1,9 +1,18 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
 // Firebase configuration - values come from environment variables
-const firebaseConfig = {
+interface FirebaseConfig {
+  apiKey: string | undefined;
+  authDomain: string | undefined;
+  projectId: string | undefined;
+  storageBucket: string | undefined;
+  messagingSenderId: string | undefined;
+  appId: string | undefined;
+}
+
+const firebaseConfig: FirebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
@@ -13,18 +22,20 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app = null;
-let auth = null;
-let db = null;
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
 let firebaseAvailable = false;
 
 try {
   // Check if all required config values are present
   const configValues = Object.values(firebaseConfig);
-  const hasAllConfig = configValues.every(val => val && val !== 'undefined' && !val.includes('your_'));
+  const hasAllConfig = configValues.every(
+    val => val && val !== 'undefined' && !val.includes('your_')
+  );
 
   if (hasAllConfig) {
-    app = initializeApp(firebaseConfig);
+    app = initializeApp(firebaseConfig as any);
     auth = getAuth(app);
     db = getFirestore(app);
     firebaseAvailable = true;

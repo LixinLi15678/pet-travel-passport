@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { useState, useEffect, useCallback } from 'react';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { auth } from './firebase/config';
 import Auth from './components/Auth';
 import MainPage from './components/MainPage';
@@ -8,21 +8,28 @@ import Vaccine from './components/Vaccine';
 import userProgressService from './services/userProgressService';
 import fileUploadService, { DEFAULT_PET_ID } from './services/fileUploadService';
 import breederService from './services/breederService';
+import { PetProfile, FileInfo, PetDimensions } from './types';
 import './App.css';
 
 /**
- * Main App Component - Pet Travel Passport Management System
+ * Main App Component - Pet Passport Management System
  * Features:
  * 1. User Authentication (Email/Password)
  * 2. Data Management (CRUD operations)
  * 3. File Upload with base64 storage
  */
-const isLegacyPetId = (petId) => !petId || petId === DEFAULT_PET_ID;
 
-const buildPetProfiles = (progressPets = [], files = [], breederPets = []) => {
-  const petMap = new Map();
+const isLegacyPetId = (petId: string | null | undefined): boolean =>
+  !petId || petId === DEFAULT_PET_ID;
 
-  const upsertPet = (pet) => {
+const buildPetProfiles = (
+  progressPets: PetProfile[] = [],
+  files: FileInfo[] = [],
+  breederPets: PetProfile[] = []
+): PetProfile[] => {
+  const petMap = new Map<string, PetProfile>();
+
+  const upsertPet = (pet: PetProfile) => {
     if (!pet?.id || isLegacyPetId(pet.id)) return;
     const existing = petMap.get(pet.id) || {};
     petMap.set(pet.id, {
@@ -41,7 +48,8 @@ const buildPetProfiles = (progressPets = [], files = [], breederPets = []) => {
     }
     petMap.set(petId, {
       id: petId,
-      createdAt: file?.uploadedAt || new Date().toISOString()
+      createdAt: file?.uploadedAt || new Date().toISOString(),
+      type: 'cat'
     });
   });
 
@@ -49,17 +57,17 @@ const buildPetProfiles = (progressPets = [], files = [], breederPets = []) => {
 };
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showLoginTip, setShowLoginTip] = useState(false);
-  const [currentPage, setCurrentPage] = useState('main'); // 'main', 'measure', or 'vaccine'
-  const [initialVaccineFiles, setInitialVaccineFiles] = useState([]);
-  const [progressLoaded, setProgressLoaded] = useState(false);
-  const [petProfiles, setPetProfiles] = useState([]);
-  const [activePetId, setActivePetId] = useState(null);
-  const [allFiles, setAllFiles] = useState([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [showLoginTip, setShowLoginTip] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<'main' | 'measure' | 'vaccine'>('main');
+  const [initialVaccineFiles, setInitialVaccineFiles] = useState<FileInfo[]>([]);
+  const [progressLoaded, setProgressLoaded] = useState<boolean>(false);
+  const [petProfiles, setPetProfiles] = useState<PetProfile[]>([]);
+  const [activePetId, setActivePetId] = useState<string | null>(null);
+  const [allFiles, setAllFiles] = useState<FileInfo[]>([]);
 
-  const persistBreederSnapshot = useCallback((pets, files) => {
+  const persistBreederSnapshot = useCallback((pets: PetProfile[], files: FileInfo[]) => {
     if (!user) return;
     breederService.saveSnapshot(user.uid, pets, files).catch((error) => {
       console.error('Failed to persist breeder snapshot:', error);
@@ -68,6 +76,11 @@ function App() {
 
   useEffect(() => {
     // Listen to authentication state changes
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -157,7 +170,7 @@ function App() {
     };
   }, [user, persistBreederSnapshot]);
 
-  const handleAuthSuccess = (authenticatedUser) => {
+  const handleAuthSuccess = (authenticatedUser: User) => {
     setUser(authenticatedUser);
     // Check if user wants to see login tip
     const dontShowAgain = localStorage.getItem('dontShowLoginTip');
@@ -166,7 +179,7 @@ function App() {
     }
   };
 
-  const handleDismissLoginTip = (dontShowAgain) => {
+  const handleDismissLoginTip = (dontShowAgain: boolean) => {
     setShowLoginTip(false);
     if (dontShowAgain) {
       localStorage.setItem('dontShowLoginTip', 'true');
@@ -195,25 +208,25 @@ function App() {
     }
   };
 
-const handleMeasureBack = () => {
-  setCurrentPage('main');
-  if (user) {
-    userProgressService.saveProgress(user.uid, { currentStep: 'main' }).catch((error) => {
-      console.error('Failed to save progress:', error);
-    });
-  }
-};
+  const handleMeasureBack = () => {
+    setCurrentPage('main');
+    if (user) {
+      userProgressService.saveProgress(user.uid, { currentStep: 'main' }).catch((error) => {
+        console.error('Failed to save progress:', error);
+      });
+    }
+  };
 
-const handleVaccineBack = () => {
-  setCurrentPage('measure');
-  if (user) {
-    userProgressService.saveProgress(user.uid, { currentStep: 'measure' }).catch((error) => {
-      console.error('Failed to save progress:', error);
-    });
-  }
-};
+  const handleVaccineBack = () => {
+    setCurrentPage('measure');
+    if (user) {
+      userProgressService.saveProgress(user.uid, { currentStep: 'measure' }).catch((error) => {
+        console.error('Failed to save progress:', error);
+      });
+    }
+  };
 
-  const handleVaccineNext = async (data) => {
+  const handleVaccineNext = async (data: { vaccineFiles: FileInfo[] }) => {
     if (!user) return;
 
     const files = data?.vaccineFiles || [];
@@ -235,7 +248,7 @@ const handleVaccineBack = () => {
     }
   };
 
-  const handleVaccineFilesChange = useCallback((petId, files) => {
+  const handleVaccineFilesChange = useCallback((petId: string, files: FileInfo[]) => {
     const fallbackPetId = petId || activePetId || petProfiles[0]?.id || null;
     if (!fallbackPetId) {
       alert('Please add a pet profile before uploading documents.');
@@ -246,8 +259,8 @@ const handleVaccineBack = () => {
       ...file,
       petId: file.petId || normalizedPetId
     }));
-    const dedupedFiles = [];
-    const seenIds = new Set();
+    const dedupedFiles: FileInfo[] = [];
+    const seenIds = new Set<string>();
     filesWithPet.forEach((file) => {
       const key = file.id || `${file.name}_${file.uploadedAt}`;
       if (seenIds.has(key)) {
@@ -267,11 +280,16 @@ const handleVaccineBack = () => {
       setInitialVaccineFiles(dedupedFiles);
     }
 
+    const defaultNewPetType = (
+      petProfiles.find((pet) => pet.id === activePetId) || petProfiles[0]
+    )?.type || 'cat';
+
     let updatedPets = petProfiles;
     if (!petProfiles.some((pet) => pet.id === normalizedPetId)) {
-      const newPet = {
+      const newPet: PetProfile = {
         id: normalizedPetId,
-        createdAt: dedupedFiles[0]?.uploadedAt || new Date().toISOString()
+        createdAt: dedupedFiles[0]?.uploadedAt || new Date().toISOString(),
+        type: defaultNewPetType
       };
       updatedPets = [...petProfiles, newPet];
       setPetProfiles(updatedPets);
@@ -294,7 +312,7 @@ const handleVaccineBack = () => {
     persistBreederSnapshot(petsForSave, nextAllFiles);
   }, [user, currentPage, activePetId, petProfiles, allFiles, persistBreederSnapshot]);
 
-  const handleDimensionsUpdate = useCallback((petId, newDimensions) => {
+  const handleDimensionsUpdate = useCallback((petId: string, newDimensions: PetDimensions) => {
     if (!petId || isLegacyPetId(petId)) {
       return;
     }
@@ -313,11 +331,13 @@ const handleVaccineBack = () => {
       });
 
       if (!found) {
+        const fallbackType = prevPets.find((pet) => pet.id === petId)?.type || 'cat';
         return [
           ...updated,
           {
             id: petId,
             createdAt: new Date().toISOString(),
+            type: fallbackType,
             dimensions: newDimensions
           }
         ];
@@ -327,7 +347,7 @@ const handleVaccineBack = () => {
     });
   }, []);
 
-  const handleDeletePet = useCallback(async (petId) => {
+  const handleDeletePet = useCallback(async (petId: string) => {
     if (!petId || isLegacyPetId(petId)) {
       console.warn('Ignoring delete request for invalid pet id:', petId);
       return;
@@ -346,7 +366,7 @@ const handleVaccineBack = () => {
     const remainingFiles = allFiles.filter((file) => file.petId !== targetPetId);
     setAllFiles(remainingFiles);
 
-    let remainingPets = petProfiles.filter((pet) => pet.id !== targetPetId);
+    const remainingPets = petProfiles.filter((pet) => pet.id !== targetPetId);
     setPetProfiles(remainingPets);
 
     const nextActive = targetPetId === activePetId
@@ -374,7 +394,7 @@ const handleVaccineBack = () => {
     persistBreederSnapshot(remainingPets, remainingFiles);
   }, [activePetId, allFiles, currentPage, petProfiles, user, persistBreederSnapshot]);
 
-  const handlePetChange = useCallback((petId) => {
+  const handlePetChange = useCallback((petId: string) => {
     const targetPetId = petId || activePetId || petProfiles[0]?.id || null;
     if (!targetPetId) {
       setActivePetId(null);
@@ -406,25 +426,21 @@ const handleVaccineBack = () => {
     }
   }, [activePetId, allFiles, currentPage, petProfiles, user]);
 
-  const handleAddPet = useCallback(async () => {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-    const nameInput = window.prompt('Give your pet a name:');
-    if (nameInput === null) {
-      return null;
-    }
-    const trimmedName = nameInput.trim();
+  const handleAddPet = useCallback(async (pet: { name: string; type: 'cat' | 'dog' }): Promise<string | null> => {
+    const trimmedName = pet?.name?.trim();
     if (!trimmedName) {
       window.alert('Pet name is required.');
       return null;
     }
 
+    const petType: 'cat' | 'dog' = pet?.type === 'dog' ? 'dog' : 'cat';
+
     const newPetId = `pet_${Date.now()}`;
-    const newPet = {
+    const newPet: PetProfile = {
       id: newPetId,
       name: trimmedName,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      type: petType
     };
     const updatedPets = [...petProfiles, newPet];
     setPetProfiles(updatedPets);
@@ -450,11 +466,58 @@ const handleVaccineBack = () => {
     return newPetId;
   }, [allFiles, currentPage, petProfiles, persistBreederSnapshot, user]);
 
+  const handleUpdatePetType = useCallback(async (petId: string, type: 'cat' | 'dog') => {
+    if (!petId || isLegacyPetId(petId)) {
+      return;
+    }
+    let nextPets: PetProfile[] = [];
+    setPetProfiles((prevPets) => {
+      let found = false;
+      const updated = prevPets.map((pet) => {
+        if (pet.id === petId) {
+          found = true;
+          return { ...pet, type };
+        }
+        return pet;
+      });
+      if (!found) {
+        nextPets = [
+          ...updated,
+          {
+            id: petId,
+            createdAt: new Date().toISOString(),
+            type
+          }
+        ];
+        return nextPets;
+      }
+      nextPets = updated;
+      return updated;
+    });
+
+    if (nextPets.length === 0) {
+      nextPets = petProfiles.map((pet) => (pet.id === petId ? { ...pet, type } : pet));
+    }
+
+    if (user) {
+      userProgressService.saveProgress(user.uid, {
+        pets: nextPets,
+        activePetId,
+        currentStep: currentPage
+      }).catch((error) => {
+        console.error('Failed to save pet type update:', error);
+      });
+    }
+    persistBreederSnapshot(nextPets, allFiles);
+  }, [activePetId, allFiles, currentPage, petProfiles, persistBreederSnapshot, user]);
+
   const handleLogout = async () => {
     if (window.confirm('Are you sure you want to logout?')) {
       try {
         const currentUserId = user?.uid;
-        await signOut(auth);
+        if (auth) {
+          await signOut(auth);
+        }
         if (currentUserId) {
           userProgressService.clearLocal(currentUserId);
         }
@@ -499,6 +562,7 @@ const handleVaccineBack = () => {
           onPetChange={handlePetChange}
           onAddPet={handleAddPet}
           onDeletePet={handleDeletePet}
+          onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
         />
       ) : currentPage === 'measure' ? (
@@ -512,6 +576,7 @@ const handleVaccineBack = () => {
           onPetChange={handlePetChange}
           onAddPet={handleAddPet}
           onDeletePet={handleDeletePet}
+          onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
           onDimensionsUpdate={handleDimensionsUpdate}
         />
@@ -528,6 +593,7 @@ const handleVaccineBack = () => {
           onPetChange={handlePetChange}
           onAddPet={handleAddPet}
           onDeletePet={handleDeletePet}
+          onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
         />
       )}

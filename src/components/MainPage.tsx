@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import PetsModal from './PetsModal';
+import { MainPageProps } from '../types';
 import './shared.css';
 import './MainPage.css';
 
 /**
- * Main Page - First page of Pet Travel Passport
+ * Main Page - First page of Pet Passport
  */
-const MainPage = ({
+const MainPage: React.FC<MainPageProps> = ({
   user,
   onLogout,
   showLoginTip,
@@ -17,15 +18,19 @@ const MainPage = ({
   onPetChange,
   onAddPet,
   onDeletePet,
+  onUpdatePetType,
   allFiles = []
 }) => {
-  const [showAccountPopup, setShowAccountPopup] = useState(false);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
-  const [showPetsModal, setShowPetsModal] = useState(false);
-  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
-  const welcomeCatSrc = `${process.env.PUBLIC_URL}/assets/icons/icons8-cat-100.png`;
-
+  const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
+  const [dontShowAgain, setDontShowAgain] = useState<boolean>(false);
+  const [showPetsModal, setShowPetsModal] = useState<boolean>(false);
   const activePet = activePetId || petProfiles[0]?.id || null;
+  const activePetProfile = activePet ? petProfiles.find((p) => p.id === activePet) : null;
+  const activePetType = activePetProfile?.type === 'dog' ? 'dog' : 'cat';
+  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/${activePetType === 'dog' ? 'dog-login.svg' : 'cat-login.svg'}`;
+  const welcomePetSrc = `${process.env.PUBLIC_URL}/assets/icons/${activePetType === 'dog' ? 'dog-main.svg' : 'cat-main.png'}`;
+  const petGreeting = activePetType === 'dog' ? 'woof~' : 'meow~';
+  const petIconLabel = activePetType === 'dog' ? 'dog icon' : 'cat icon';
   const hasPets = petProfiles.length > 0;
 
   const currentPetName = useMemo(() => {
@@ -49,29 +54,30 @@ const MainPage = ({
     return `${date.toISOString().slice(0, 10)} ${pet?.name || 'CAT'}`;
   }, [activePet, allFiles, petProfiles]);
 
-  const handleOpenPetsModal = () => {
+  const handleOpenPetsModal = (): void => {
     setShowPetsModal(true);
     setShowAccountPopup(false);
   };
 
-  const handleClosePetsModal = () => {
+  const handleClosePetsModal = (): void => {
     setShowPetsModal(false);
   };
 
-  const handleSelectPet = (petId) => {
+  const handlePetChangeWithClose = (petId: string): void => {
     if (onPetChange) {
       onPetChange(petId);
     }
     setShowPetsModal(false);
     setShowAccountPopup(false);
   };
+
   return (
     <div className="page-background">
       <div className="page-header">
         {/* Header Section */}
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Travel Passport</h1>
+            <h1 className="page-title">Pet Passport</h1>
             <p className="page-subtitle">Verified check-in in 4 steps</p>
           </div>
             {user && (
@@ -89,7 +95,7 @@ const MainPage = ({
                   >
                     <div
                       className="account-popup-content"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
                     >
                       <p className="account-email">{user.email}</p>
                       <button
@@ -158,14 +164,14 @@ const MainPage = ({
           <div className="login-tip-modal">
             <h2>Welcome!</h2>
             <p>
-              To log out, tap the <span className="highlight-text">cat icon</span> in the top right, then choose logout from the menu.
+              To log out, tap the <span className="highlight-text">{petIconLabel}</span> in the top right, then choose logout from the menu.
             </p>
             <div className="tip-checkbox">
               <input
                 type="checkbox"
                 id="dontShowAgain"
                 checked={dontShowAgain}
-                onChange={(e) => setDontShowAgain(e.target.checked)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDontShowAgain(e.target.checked)}
               />
               <label htmlFor="dontShowAgain">Do not show again</label>
             </div>
@@ -185,14 +191,14 @@ const MainPage = ({
           {/* Cat Icon */}
           <div className="cat-icon">
             <img
-              src={welcomeCatSrc}
-              alt="Cat"
+              src={welcomePetSrc}
+              alt="Pet"
               className="cat-image"
             />
           </div>
 
           {/* Greeting */}
-          <p className="meow-text">meow~</p>
+          <p className="meow-text">{petGreeting}</p>
 
           {/* Welcome Title */}
           <h2 className="hero-title">Welcome!</h2>
@@ -257,9 +263,10 @@ const MainPage = ({
           onClose={handleClosePetsModal}
           petProfiles={petProfiles}
           activePetId={activePet}
-          onSelectPet={handleSelectPet}
+          onPetChange={handlePetChangeWithClose}
           onAddPet={onAddPet}
           onDeletePet={onDeletePet}
+          onUpdatePetType={onUpdatePetType}
           allFiles={allFiles}
         />
       )}

@@ -5,11 +5,17 @@ import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import fileUploadService, { DEFAULT_PET_ID } from '../services/fileUploadService';
 import { compressImage, isImageFile } from '../utils/imageCompression';
 import PetsModal from './PetsModal';
+import { VaccineProps, FileInfo } from '../types';
 import './shared.css';
 import './Vaccine.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-const VaccineEnhanced = ({
+
+interface UploadProgress {
+  [key: string]: number;
+}
+
+const VaccineEnhanced: React.FC<VaccineProps> = ({
   user,
   onNext,
   onBack,
@@ -21,28 +27,32 @@ const VaccineEnhanced = ({
   onPetChange,
   onAddPet,
   onDeletePet,
+  onUpdatePetType,
   allFiles = []
 }) => {
-  const [vaccineFiles, setVaccineFiles] = useState(initialFiles);
-  const [uploadProgress, setUploadProgress] = useState({});
-  const [isUploading, setIsUploading] = useState(false);
-  const [previewFile, setPreviewFile] = useState(null);
-  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
-  const [isPdfLoading, setIsPdfLoading] = useState(false);
-  const [pdfLoadError, setPdfLoadError] = useState(null);
-  const [pdfNumPages, setPdfNumPages] = useState(null);
-  const [pdfPageNumber, setPdfPageNumber] = useState(1);
-  const [dragOverIndex, setDragOverIndex] = useState(null);
-  const [showAccountPopup, setShowAccountPopup] = useState(false);
-  const [pdfPageWidth, setPdfPageWidth] = useState(520);
-  const [showPetsModal, setShowPetsModal] = useState(false);
+  const [vaccineFiles, setVaccineFiles] = useState<FileInfo[]>(initialFiles);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [previewFile, setPreviewFile] = useState<FileInfo | null>(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [isPdfLoading, setIsPdfLoading] = useState<boolean>(false);
+  const [pdfLoadError, setPdfLoadError] = useState<string | null>(null);
+  const [pdfNumPages, setPdfNumPages] = useState<number | null>(null);
+  const [pdfPageNumber, setPdfPageNumber] = useState<number>(1);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
+  const [pdfPageWidth, setPdfPageWidth] = useState<number>(520);
+  const [showPetsModal, setShowPetsModal] = useState<boolean>(false);
 
-  const fileInputRef = useRef(null);
-  const photoInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const activePet = activePetId || petProfiles[0]?.id || null;
+  const activePetProfile = activePet ? petProfiles.find((pet) => pet.id === activePet) : null;
+  const activePetType = activePetProfile?.type === 'dog' ? 'dog' : 'cat';
+  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/${activePetType === 'dog' ? 'dog-login.svg' : 'cat-login.svg'}`;
 
   const updateFiles = useCallback(
-    (updater) => {
+    (updater: FileInfo[] | ((prev: FileInfo[]) => FileInfo[])) => {
       if (!activePet) {
         console.warn('No active pet selected. Unable to update files.');
         return;
@@ -58,12 +68,12 @@ const VaccineEnhanced = ({
     [onFilesChange, activePet]
   );
 
-  const isPdfFileType = (file) => {
+  const isPdfFileType = (file: FileInfo): boolean => {
     const name = file?.name?.toLowerCase() || '';
     return file?.type === 'application/pdf' || name.endsWith('.pdf');
   };
 
-  const formatFileSize = (sizeInBytes) => {
+  const formatFileSize = (sizeInBytes?: number): string | null => {
     if (typeof sizeInBytes !== 'number') return null;
     if (sizeInBytes >= 1024 * 1024) {
       return `${(sizeInBytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -83,7 +93,7 @@ const VaccineEnhanced = ({
     setShowPetsModal(false);
   };
 
-  const handleSelectPetProfile = (petId) => {
+  const handleSelectPetProfile = (petId: string) => {
     if (onPetChange) {
       onPetChange(petId);
     }
@@ -93,7 +103,7 @@ const VaccineEnhanced = ({
 
   useEffect(() => {
     let isCancelled = false;
-    let objectUrl = null;
+    let objectUrl: string | null = null;
 
     const cleanupObjectUrl = () => {
       if (objectUrl) {
@@ -118,10 +128,10 @@ const VaccineEnhanced = ({
       setPdfNumPages(null);
       setPdfPageNumber(1);
       try {
-        const inlineSource = previewFile.data || previewFile.url;
+        const inlineSource = previewFile.data || (previewFile as any).url;
 
-        if (previewFile.url && (previewFile.url.startsWith('http') || previewFile.url.startsWith('blob:'))) {
-          setPdfPreviewUrl(previewFile.url);
+        if ((previewFile as any).url && ((previewFile as any).url.startsWith('http') || (previewFile as any).url.startsWith('blob:'))) {
+          setPdfPreviewUrl((previewFile as any).url);
         } else if (inlineSource?.startsWith('data:')) {
           const response = await fetch(inlineSource);
           if (!response.ok) {
@@ -177,7 +187,7 @@ const VaccineEnhanced = ({
   const noPetSelected = !activePet;
 
   // File upload handler with compression
-  const handleFileSelect = async (event) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!activePet) {
       alert('Please add a pet profile before uploading documents.');
       if (event?.target) {
@@ -191,8 +201,8 @@ const VaccineEnhanced = ({
     if (files.length === 0) return;
 
     setIsUploading(true);
-    const validFiles = [];
-    const errors = [];
+    const validFiles: File[] = [];
+    const errors: string[] = [];
 
     // Validate and compress images
     for (const file of files) {
@@ -229,7 +239,7 @@ const VaccineEnhanced = ({
           user.uid,
           'vaccine',
           activePet,
-          (index, progress) => {
+          (index: number, progress: number) => {
             setUploadProgress(prev => ({
               ...prev,
               [`temp_${index}`]: progress
@@ -241,7 +251,7 @@ const VaccineEnhanced = ({
         alert(`Successfully uploaded ${results.length} file(s)!`);
       } catch (error) {
         console.error('File upload error:', error);
-        alert('File upload failed: ' + error.message);
+        alert('File upload failed: ' + (error as Error).message);
       }
     }
 
@@ -249,13 +259,13 @@ const VaccineEnhanced = ({
   };
 
   // Photo upload handler with compression
-  const handlePhotoSelect = async (event) => {
+  const handlePhotoSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     await handleFileSelect(event);
   };
 
   const handleDownloadPdf = () => {
     if (!previewFile) return;
-    const source = pdfPreviewUrl || previewFile.data || previewFile.url;
+    const source = pdfPreviewUrl || previewFile.data || (previewFile as any).url;
     if (!source) return;
     const link = document.createElement('a');
     link.href = source;
@@ -265,13 +275,13 @@ const VaccineEnhanced = ({
     document.body.removeChild(link);
   };
 
-  const handlePdfLoadSuccess = ({ numPages }) => {
+  const handlePdfLoadSuccess = ({ numPages }: { numPages: number }) => {
     setPdfNumPages(numPages);
     setPdfPageNumber(1);
     setPdfLoadError(null);
   };
 
-  const handlePdfLoadError = (error) => {
+  const handlePdfLoadError = (error: Error) => {
     console.error('PDF render error:', error);
     setPdfLoadError('Unable to render PDF preview.');
   };
@@ -287,7 +297,7 @@ const VaccineEnhanced = ({
 
 
   // Remove file
-  const removeFile = async (index) => {
+  const removeFile = async (index: number) => {
     const fileToRemove = vaccineFiles[index];
     if (!fileToRemove) return;
 
@@ -298,12 +308,12 @@ const VaccineEnhanced = ({
       updateFiles(prev => prev.filter((_, i) => i !== index));
     } catch (error) {
       console.error('Delete file error:', error);
-      alert('Failed to remove file: ' + error.message);
+      alert('Failed to remove file: ' + (error as Error).message);
     }
   };
 
   // Re-upload file
-  const reuploadFile = async (index) => {
+  const reuploadFile = async (index: number) => {
     const fileToReupload = vaccineFiles[index];
     if (!fileToReupload) return;
 
@@ -312,8 +322,9 @@ const VaccineEnhanced = ({
     input.type = 'file';
     input.accept = 'application/pdf,image/jpeg,image/jpg,image/png';
 
-    input.onchange = async (e) => {
-      const files = Array.from(e.target.files || []);
+    input.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      const files = Array.from(target.files || []);
       if (files.length === 0) return;
 
       const file = files[0];
@@ -330,7 +341,7 @@ const VaccineEnhanced = ({
         await fileUploadService.deleteFiles([fileToReupload], user.uid);
 
         // Compress if image
-        let fileToUpload = file;
+        let fileToUpload: File = file;
         if (isImageFile(file)) {
           fileToUpload = await compressImage(file, {
             maxWidth: 1920,
@@ -354,7 +365,7 @@ const VaccineEnhanced = ({
           user.uid,
           'vaccine',
           petScope,
-          (_, progress) => {
+          (_: number, progress: number) => {
             setUploadProgress({ [`reupload_${index}`]: progress });
           }
         );
@@ -370,7 +381,7 @@ const VaccineEnhanced = ({
         alert('File replaced successfully!');
       } catch (error) {
         console.error('Reupload error:', error);
-        alert('File replacement failed: ' + error.message);
+        alert('File replacement failed: ' + (error as Error).message);
       }
       setIsUploading(false);
     };
@@ -379,7 +390,7 @@ const VaccineEnhanced = ({
   };
 
   // Preview file
-  const previewFileHandler = (file) => {
+  const previewFileHandler = (file: FileInfo) => {
     setPreviewFile(file);
   };
 
@@ -388,12 +399,12 @@ const VaccineEnhanced = ({
   };
 
   // Drag and drop sorting
-  const handleDragStart = (e, index) => {
+  const handleDragStart = (e: React.DragEvent<HTMLLIElement>, index: number) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', index.toString());
   };
 
-  const handleDragOver = (e, index) => {
+  const handleDragOver = (e: React.DragEvent<HTMLLIElement>, index: number) => {
     e.preventDefault();
     setDragOverIndex(index);
   };
@@ -402,7 +413,7 @@ const VaccineEnhanced = ({
     setDragOverIndex(null);
   };
 
-  const handleDrop = (e, dropIndex) => {
+  const handleDrop = (e: React.DragEvent<HTMLLIElement>, dropIndex: number) => {
     e.preventDefault();
     const dragIndex = parseInt(e.dataTransfer.getData('text/html'));
 
@@ -419,7 +430,7 @@ const VaccineEnhanced = ({
     setDragOverIndex(null);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!activePet) {
       alert('Please add a pet profile before continuing.');
       return;
@@ -431,10 +442,9 @@ const VaccineEnhanced = ({
     }
 
     if (!onNext) return;
-    onNext({ vaccineFiles, petId: activePet });
+    await onNext({ vaccineFiles });
   };
 
-  const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/cat-login.svg`;
   const vaccineIconSrc = `${process.env.PUBLIC_URL}/assets/icons/vaccination.svg`;
   const uploadProgressValue = Object.values(uploadProgress)[0] || 0;
   const isPdfPreview = previewFile && isPdfFileType(previewFile);
@@ -444,7 +454,7 @@ const VaccineEnhanced = ({
   const previewFileSizeLabel = formatFileSize(previewFile?.size);
   const canRenderPdf = isPdfPreview && pdfPreviewUrl && !pdfLoadError;
   const pdfDownloadSourceAvailable = Boolean(
-    previewFile && (pdfPreviewUrl || previewFile.data || previewFile.url)
+    previewFile && (pdfPreviewUrl || previewFile.data || (previewFile as any).url)
   );
   const pdfControlsDisabled = !pdfNumPages || isPdfLoading || !!pdfLoadError;
 
@@ -454,7 +464,7 @@ const VaccineEnhanced = ({
       <div className="page-header">
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Travel Passport</h1>
+            <h1 className="page-title">Pet Passport</h1>
             <p className="page-subtitle">Vaccine verification</p>
           </div>
           {user && (
@@ -704,9 +714,11 @@ const VaccineEnhanced = ({
           onClose={handleClosePetsModal}
           petProfiles={petProfiles}
           activePetId={activePet}
+          onPetChange={onPetChange}
           onSelectPet={handleSelectPetProfile}
           onAddPet={onAddPet}
           onDeletePet={onDeletePet}
+          onUpdatePetType={onUpdatePetType}
           allFiles={allFiles}
         />
       )}
@@ -742,7 +754,7 @@ const VaccineEnhanced = ({
             </div>
             {isImagePreview && (
               <img
-                src={previewFile.data || previewFile.url}
+                src={previewFile.data || (previewFile as any).url}
                 alt={previewFile.name}
                 className="preview-image"
               />

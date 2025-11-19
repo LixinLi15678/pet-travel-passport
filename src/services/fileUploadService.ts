@@ -1,5 +1,6 @@
 import { doc, setDoc, deleteDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { db, firebaseAvailable } from '../firebase/config';
+import { FileInfo, FileValidationOptions, FileValidationResult, ProgressCallback, FileProgressCallback } from '../types';
 
 /**
  * File Upload Service - Stores files as base64 in Firestore or localStorage
@@ -10,15 +11,19 @@ const STORAGE_KEY_PREFIX = 'pet_passport_files_';
 const LOCAL_STORAGE_MAX_BYTES = 1024 * 1024; // keep cached payloads under ~1MB
 const DEFAULT_PET_ID = 'pet_default';
 
-const normalizePetId = (petId) => (petId && petId !== DEFAULT_PET_ID ? petId : null);
+const normalizePetId = (petId: string | null | undefined): string | null =>
+  (petId && petId !== DEFAULT_PET_ID ? petId : null);
 
 class FileUploadService {
+  private useFirebase: boolean;
+  private fileCache: Map<string, FileInfo>;
+
   constructor() {
     this.useFirebase = firebaseAvailable;
     this.fileCache = new Map(); // In-memory cache for uploaded files
   }
 
-  _requirePetId(petId) {
+  private _requirePetId(petId: string | null | undefined): string {
     const normalized = normalizePetId(petId);
     if (!normalized) {
       throw new Error('A valid petId is required before uploading files.');
@@ -28,13 +33,20 @@ class FileUploadService {
 
   /**
    * Upload multiple files
-   * @param {FileList|Array} files - Files to upload
-   * @param {string} userId - User ID
-   * @param {string} category - File category (e.g., 'vaccination', 'measurement')
-   * @param {Function} onProgress - Progress callback (optional)
-   * @returns {Promise<Array>} Array of uploaded file info
+   * @param files - Files to upload
+   * @param userId - User ID
+   * @param category - File category (e.g., 'vaccination', 'measurement')
+   * @param petId - Pet ID
+   * @param onProgress - Progress callback (optional)
+   * @returns Array of uploaded file info
    */
-  async uploadFiles(files, userId, category = 'general', petId = null, onProgress = null) {
+  async uploadFiles(
+    files: FileList | File[],
+    userId: string,
+    category: string = 'general',
+    petId: string | null = null,
+    onProgress: FileProgressCallback | null = null
+  ): Promise<FileInfo[]> {
     const filesArray = Array.from(files);
     const targetPetId = this._requirePetId(petId);
     const uploadPromises = filesArray.map((file, index) =>
@@ -57,20 +69,27 @@ class FileUploadService {
 
   /**
    * Upload a single file as base64
-   * @param {File} file - File to upload
-   * @param {string} userId - User ID
-   * @param {string} category - File category
-   * @param {Function} onProgress - Progress callback (optional)
-   * @returns {Promise<object>} Uploaded file info
+   * @param file - File to upload
+   * @param userId - User ID
+   * @param category - File category
+   * @param petId - Pet ID
+   * @param onProgress - Progress callback (optional)
+   * @returns Uploaded file info
    */
-  async uploadSingleFile(file, userId, category, petId = null, onProgress = null) {
+  async uploadSingleFile(
+    file: File,
+    userId: string,
+    category: string,
+    petId: string | null = null,
+    onProgress: ProgressCallback | null = null
+  ): Promise<FileInfo> {
     const targetPetId = this._requirePetId(petId);
     const fileId = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
 
     // Convert file to base64
     const base64Data = await this._fileToBase64(file, onProgress);
 
-    const fileInfo = {
+    const fileInfo: FileInfo = {
       id: fileId,
       name: file.name,
       size: file.size,
@@ -82,7 +101,7 @@ class FileUploadService {
       petId: targetPetId
     };
 
-    if (this.useFirebase) {
+    if (this.useFirebase && db) {
       try {
         // Store in Firestore
         const fileDocRef = doc(db, 'files', `${userId}_${fileId}`);
@@ -91,7 +110,7 @@ class FileUploadService {
         console.log('File stored in Firestore:', fileId);
 
         // Also cache locally
-        const storedInfo = {
+        const storedInfo: FileInfo = {
           ...fileInfo,
           source: 'firestore'
         };
@@ -101,7 +120,7 @@ class FileUploadService {
       } catch (error) {
         console.error('Firestore save error:', error);
         // Fallback to localStorage
-        const storedInfo = {
+        const storedInfo: FileInfo = {
           ...fileInfo,
           source: 'local'
         };
@@ -110,7 +129,7 @@ class FileUploadService {
       }
     } else {
       // Use localStorage directly
-      const storedInfo = {
+      const storedInfo: FileInfo = {
         ...fileInfo,
         source: 'local'
       };
@@ -121,29 +140,30 @@ class FileUploadService {
 
   /**
    * Load all non-expired files for a user
-   * @param {string} userId
-   * @returns {Promise<Array>} File info array
+   * @param userId - User ID
+   * @param petId - Optional pet ID filter
+   * @returns File info array
    */
-  async loadFiles(userId, petId = null) {
+  async loadFiles(userId: string, petId: string | null = null): Promise<FileInfo[]> {
     if (!userId) return [];
 
-    const filesMap = new Map();
+    const filesMap = new Map<string, FileInfo>();
 
     const localFiles = this._getLocalFiles(userId, petId);
     localFiles.forEach((file) => {
       filesMap.set(file.id, { ...file, source: file.source || 'local' });
     });
 
-    if (this.useFirebase) {
+    if (this.useFirebase && db) {
       try {
         const filesQuery = query(collection(db, 'files'), where('userId', '==', userId));
         const snapshot = await getDocs(filesQuery);
         snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
+          const data = docSnap.data() as FileInfo;
           if (petId && data.petId !== petId) {
             return;
           }
-          const remoteFile = { ...data, source: 'firestore' };
+          const remoteFile: FileInfo = { ...data, source: 'firestore' };
           filesMap.set(remoteFile.id, remoteFile);
           this._saveToLocalStorage(
             userId,
@@ -171,13 +191,20 @@ class FileUploadService {
 
   /**
    * Re-upload files (replace existing files)
-   * @param {FileList|Array} newFiles - New files to upload
-   * @param {Array} existingFiles - Existing file info to replace
-   * @param {string} userId - User ID
-   * @param {string} category - File category
-   * @returns {Promise<Array>} Array of uploaded file info
+   * @param newFiles - New files to upload
+   * @param existingFiles - Existing file info to replace
+   * @param userId - User ID
+   * @param category - File category
+   * @param petId - Pet ID
+   * @returns Array of uploaded file info
    */
-  async reUploadFiles(newFiles, existingFiles, userId, category, petId = null) {
+  async reUploadFiles(
+    newFiles: FileList | File[],
+    existingFiles: FileInfo[],
+    userId: string,
+    category: string,
+    petId: string | null = null
+  ): Promise<FileInfo[]> {
     console.log('Re-uploading files, existing count:', existingFiles.length);
 
     // Delete old files
@@ -193,14 +220,13 @@ class FileUploadService {
 
   /**
    * Delete files
-   * @param {Array} fileInfos - Array of file info objects
-   * @param {string} userId - User ID
-   * @returns {Promise<void>}
+   * @param fileInfos - Array of file info objects
+   * @param userId - User ID
    */
-  async deleteFiles(fileInfos, userId) {
+  async deleteFiles(fileInfos: FileInfo[], userId: string): Promise<void> {
     const deletePromises = fileInfos.map(async (info) => {
       try {
-        if (this.useFirebase && info.source !== 'local') {
+        if (this.useFirebase && db && info.source !== 'local') {
           // Delete from Firestore
           const fileDocRef = doc(db, 'files', `${userId}_${info.id}`);
           await deleteDoc(fileDocRef);
@@ -223,11 +249,11 @@ class FileUploadService {
 
   /**
    * Convert file to base64
-   * @param {File} file - File to convert
-   * @param {Function} onProgress - Progress callback
-   * @returns {Promise<string>} Base64 string
+   * @param file - File to convert
+   * @param onProgress - Progress callback
+   * @returns Base64 string
    */
-  _fileToBase64(file, onProgress) {
+  private _fileToBase64(file: File, onProgress: ProgressCallback | null): Promise<string> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
 
@@ -244,7 +270,7 @@ class FileUploadService {
 
       reader.onload = () => {
         if (onProgress) onProgress(100);
-        resolve(reader.result); // base64 string with data URL prefix
+        resolve(reader.result as string); // base64 string with data URL prefix
       };
 
       reader.onerror = () => {
@@ -257,11 +283,12 @@ class FileUploadService {
 
   /**
    * Save file info to localStorage
-   * @param {string} userId - User ID
-   * @param {string} fileId - File ID
-   * @param {object} fileInfo - File information
+   * @param userId - User ID
+   * @param petId - Pet ID
+   * @param fileId - File ID
+   * @param fileInfo - File information
    */
-  _saveToLocalStorage(userId, petId, fileId, fileInfo) {
+  private _saveToLocalStorage(userId: string, petId: string, fileId: string, fileInfo: FileInfo): void {
     if (typeof localStorage === 'undefined') {
       return;
     }
@@ -272,7 +299,7 @@ class FileUploadService {
       ? fileInfo
       : {
           ...fileInfo,
-          data: null,
+          data: '',
           dataStoredLocally: false
         };
 
@@ -320,10 +347,11 @@ class FileUploadService {
 
   /**
    * Delete file from localStorage
-   * @param {string} userId - User ID
-   * @param {string} fileId - File ID
+   * @param userId - User ID
+   * @param petId - Pet ID
+   * @param fileId - File ID
    */
-  _deleteFromLocalStorage(userId, petId, fileId) {
+  private _deleteFromLocalStorage(userId: string, petId: string, fileId: string): void {
     try {
       const key = this._buildStorageKey(userId, petId || DEFAULT_PET_ID, fileId);
       localStorage.removeItem(key);
@@ -337,11 +365,11 @@ class FileUploadService {
 
   /**
    * Validate file before upload
-   * @param {File} file - File to validate
-   * @param {object} options - Validation options
-   * @returns {object} Validation result
+   * @param file - File to validate
+   * @param options - Validation options
+   * @returns Validation result
    */
-  validateFile(file, options = {}) {
+  validateFile(file: File, options: FileValidationOptions = {}): FileValidationResult {
     const {
       maxSize = 5 * 1024 * 1024, // 5MB default (reduced from 10MB for base64 storage)
       allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
@@ -366,22 +394,22 @@ class FileUploadService {
 
   /**
    * Get cached file info
-   * @param {string} fileId - File ID
-   * @returns {object|null} File info or null
+   * @param fileId - File ID
+   * @returns File info or null
    */
-  getCachedFile(fileId) {
+  getCachedFile(fileId: string): FileInfo | null {
     return this.fileCache.get(fileId) || null;
   }
 
   /**
    * Clear file cache
    */
-  clearCache() {
+  clearCache(): void {
     this.fileCache.clear();
     console.log('File cache cleared');
   }
 
-  _isQuotaExceededError(error) {
+  private _isQuotaExceededError(error: any): boolean {
     if (!error) return false;
     return (
       error.name === 'QuotaExceededError' ||
@@ -391,12 +419,12 @@ class FileUploadService {
     );
   }
 
-  _evictOldLocalEntries(entriesToRemove = 3) {
+  private _evictOldLocalEntries(entriesToRemove: number = 3): number {
     if (typeof localStorage === 'undefined') {
       return 0;
     }
 
-    const keys = [];
+    const keys: string[] = [];
 
     for (let i = 0; i < localStorage.length; i += 1) {
       const key = localStorage.key(i);
@@ -412,7 +440,7 @@ class FileUploadService {
     const entries = keys
       .map((key) => {
         try {
-          const value = JSON.parse(localStorage.getItem(key));
+          const value = JSON.parse(localStorage.getItem(key) || '{}');
           return {
             key,
             uploadedAt: value?.uploadedAt || null
@@ -443,14 +471,14 @@ class FileUploadService {
     return removed;
   }
 
-  _getLocalFiles(userId, petId = null) {
+  private _getLocalFiles(userId: string, petId: string | null = null): FileInfo[] {
     if (typeof localStorage === 'undefined' || !userId) {
       return [];
     }
 
     const userPrefix = this._buildStoragePrefix(userId);
     const petPrefix = petId ? this._buildStoragePrefix(userId, petId) : null;
-    const files = [];
+    const files: FileInfo[] = [];
 
     for (let i = 0; i < localStorage.length; i += 1) {
       const key = localStorage.key(i);
@@ -459,7 +487,7 @@ class FileUploadService {
           continue;
         }
         try {
-          const value = JSON.parse(localStorage.getItem(key));
+          const value = JSON.parse(localStorage.getItem(key) || '{}') as FileInfo;
           if (value) {
             if (value.id) {
               this.fileCache.set(value.id, value);
@@ -475,11 +503,11 @@ class FileUploadService {
     return files;
   }
 
-  _buildStorageKey(userId, petId, fileId) {
+  private _buildStorageKey(userId: string, petId: string, fileId: string): string {
     return `${this._buildStoragePrefix(userId, petId)}${fileId}`;
   }
 
-  _buildStoragePrefix(userId, petId = null) {
+  private _buildStoragePrefix(userId: string, petId: string | null = null): string {
     const base = `${STORAGE_KEY_PREFIX}${userId}_`;
     if (!petId) {
       return base;

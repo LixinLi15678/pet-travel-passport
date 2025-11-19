@@ -5,24 +5,25 @@ import {
   sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
+import { AuthProps } from '../types';
 import './Auth.css';
 
 /**
  * Authentication Component - Email/Password Login and Registration
  */
-const Auth = ({ onAuthSuccess }) => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showResetPassword, setShowResetPassword] = useState(false);
-  const [resetEmailSent, setResetEmailSent] = useState(false);
-  const firstErrorInputRef = useRef(null);
-  const formRef = useRef(null);
+const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
+  const [isLogin, setIsLogin] = useState<boolean>(true);
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [showResetPassword, setShowResetPassword] = useState<boolean>(false);
+  const [resetEmailSent, setResetEmailSent] = useState<boolean>(false);
+  const firstErrorInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Focus management for errors
   useEffect(() => {
@@ -32,7 +33,7 @@ const Auth = ({ onAuthSuccess }) => {
   }, [error]);
 
   // Reset form when switching tabs
-  const handleTabSwitch = (loginMode) => {
+  const handleTabSwitch = (loginMode: boolean) => {
     setIsLogin(loginMode);
     setError('');
     setPassword('');
@@ -42,7 +43,7 @@ const Auth = ({ onAuthSuccess }) => {
   };
 
   // Handle password reset
-  const handleResetPassword = async (e) => {
+  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
@@ -53,11 +54,16 @@ const Auth = ({ onAuthSuccess }) => {
 
     setLoading(true);
     try {
+      if (!auth) {
+        setError('Authentication service is not available');
+        return;
+      }
       await sendPasswordResetEmail(auth, email);
       setResetEmailSent(true);
       setError('');
-    } catch (error) {
-      console.error('Password reset error:', error);
+    } catch (err) {
+      console.error('Password reset error:', err);
+      const error = err as { code?: string };
       if (error.code === 'auth/user-not-found') {
         setError('If this email is registered, a reset link has been sent');
       } else {
@@ -68,7 +74,7 @@ const Auth = ({ onAuthSuccess }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setResetEmailSent(false);
@@ -92,6 +98,11 @@ const Auth = ({ onAuthSuccess }) => {
     setLoading(true);
 
     try {
+      if (!auth) {
+        setError('Authentication service is not available');
+        return;
+      }
+
       if (isLogin) {
         // Login
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -107,8 +118,9 @@ const Auth = ({ onAuthSuccess }) => {
           onAuthSuccess(userCredential.user);
         }
       }
-    } catch (error) {
-      console.error('Auth error:', error);
+    } catch (err) {
+      console.error('Auth error:', err);
+      const error = err as { code?: string };
 
       // Handle Firebase errors - unified messaging for login to prevent email enumeration
       switch (error.code) {
@@ -141,7 +153,7 @@ const Auth = ({ onAuthSuccess }) => {
     }
   };
 
-  const catIllustration = `${process.env.PUBLIC_URL}/assets/icons/Cat.svg`;
+  const catIllustration = `${process.env.PUBLIC_URL}/assets/icons/cat-weight.svg`;
 
   // Password reset view
   if (showResetPassword) {
@@ -153,7 +165,7 @@ const Auth = ({ onAuthSuccess }) => {
               <div className="brand-icon-compact">
                 <img src={catIllustration} alt="Pet Passport" />
               </div>
-              <p className="brand-name">Pet Travel Passport</p>
+              <p className="brand-name">Pet Passport</p>
             </div>
             <p className="brand-tagline">Your pet's journey, simplified.</p>
           </div>
@@ -239,7 +251,7 @@ const Auth = ({ onAuthSuccess }) => {
             <div className="brand-icon-compact">
               <img src={catIllustration} alt="Pet Passport" />
             </div>
-            <p className="brand-name">Pet Travel Passport</p>
+            <p className="brand-name">Pet Passport</p>
           </div>
           <p className="brand-tagline">Your pet's journey, simplified.</p>
         </div>

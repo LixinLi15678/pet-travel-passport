@@ -1,18 +1,35 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db, firebaseAvailable } from '../firebase/config';
 import { DEFAULT_PET_ID } from './fileUploadService';
+import { PetProfile, FileInfo, BreederData } from '../types';
 
 const COLLECTION_NAME = 'breeders';
 
-const buildPetSnapshot = (pets = [], files = []) => {
-  const fileMap = new Map();
+interface PetFileSnapshot {
+  fileId: string;
+  name: string;
+  uploadedAt: string;
+  type: string;
+  size: number;
+}
+
+interface PetSnapshot {
+  id: string;
+  name: string | null;
+  createdAt: string | null;
+  files: PetFileSnapshot[];
+}
+
+const buildPetSnapshot = (pets: PetProfile[] = [], files: FileInfo[] = []): PetSnapshot[] => {
+  const fileMap = new Map<string, PetFileSnapshot[]>();
+
   files.forEach((file) => {
     if (!file) return;
     const petId = file.petId || DEFAULT_PET_ID;
     if (!fileMap.has(petId)) {
       fileMap.set(petId, []);
     }
-    fileMap.get(petId).push({
+    fileMap.get(petId)!.push({
       fileId: file.id,
       name: file.name,
       uploadedAt: file.uploadedAt,
@@ -30,12 +47,14 @@ const buildPetSnapshot = (pets = [], files = []) => {
 };
 
 class BreederService {
+  private enabled: boolean;
+
   constructor() {
     this.enabled = firebaseAvailable;
   }
 
-  async getBreeder(userId) {
-    if (!userId || !this.enabled) {
+  async getBreeder(userId: string): Promise<BreederData> {
+    if (!userId || !this.enabled || !db) {
       return { pets: [] };
     }
 
@@ -44,15 +63,15 @@ class BreederService {
       if (!breederDoc.exists()) {
         return { pets: [] };
       }
-      return breederDoc.data();
+      return breederDoc.data() as BreederData;
     } catch (error) {
       console.error('Failed to load breeder data:', error);
       return { pets: [] };
     }
   }
 
-  async saveSnapshot(userId, pets = [], files = []) {
-    if (!userId || !this.enabled) {
+  async saveSnapshot(userId: string, pets: PetProfile[] = [], files: FileInfo[] = []): Promise<void> {
+    if (!userId || !this.enabled || !db) {
       return;
     }
 
