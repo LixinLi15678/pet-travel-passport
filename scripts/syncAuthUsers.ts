@@ -21,7 +21,25 @@ const loadEnvFiles = (): void => {
 
 loadEnvFiles();
 
+const parseServiceAccount = (payload: string): Record<string, unknown> => {
+  try {
+    return JSON.parse(payload);
+  } catch (error) {
+    try {
+      const decoded = Buffer.from(payload, 'base64').toString('utf8');
+      return JSON.parse(decoded);
+    } catch (decodeError) {
+      throw new Error('Unable to parse service account JSON payload.');
+    }
+  }
+};
+
 const resolveCredentials = () => {
+  const inlineJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (inlineJson && inlineJson.trim().length > 0) {
+    return parseServiceAccount(inlineJson.trim());
+  }
+
   const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (!credentialsPath) {
     throw new Error('Missing GOOGLE_APPLICATION_CREDENTIALS env variable.');
