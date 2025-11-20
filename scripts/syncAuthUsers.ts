@@ -22,13 +22,28 @@ const loadEnvFiles = (): void => {
 loadEnvFiles();
 
 const resolveCredentials = () => {
-  const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!serviceAccountBase64) {
+  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!serviceAccount) {
     throw new Error('Missing FIREBASE_SERVICE_ACCOUNT env variable.');
   }
-  // Decode base64 to JSON string
-  const serviceAccountJson = Buffer.from(serviceAccountBase64, 'base64').toString('utf8');
-  return JSON.parse(serviceAccountJson);
+
+  // Debug: show what we received
+  console.log(`[debug] FIREBASE_SERVICE_ACCOUNT length: ${serviceAccount.length}`);
+  console.log(`[debug] First 50 chars: ${serviceAccount.substring(0, 50)}`);
+
+  // Try base64 decode first
+  try {
+    const decoded = Buffer.from(serviceAccount, 'base64').toString('utf8');
+    console.log(`[debug] Decoded first 50 chars: ${decoded.substring(0, 50)}`);
+    if (decoded.startsWith('{')) {
+      return JSON.parse(decoded);
+    }
+  } catch (e) {
+    console.log(`[debug] Base64 decode failed: ${e}`);
+  }
+
+  // Try as raw JSON
+  return JSON.parse(serviceAccount);
 };
 
 const bootstrap = () => {
