@@ -35,31 +35,37 @@ const normalizeRaw = (value: string): string => {
 const parseInlineServiceAccount = (payload: string): Record<string, unknown> => {
   const normalized = normalizeRaw(payload);
 
-  // First check if it's a file path (doesn't start with { or look like base64)
-  if (!normalized.startsWith('{') && !normalized.match(/^[A-Za-z0-9+/=]+$/)) {
+  // If it starts with {, it's JSON
+  if (normalized.startsWith('{')) {
+    return JSON.parse(normalized);
+  }
+
+  // Check if it looks like a file path (contains . or / and is short)
+  const looksLikePath = (normalized.includes('.') || normalized.includes('/')) && normalized.length < 200;
+
+  if (looksLikePath) {
+    // Try as relative path from project root
     const possiblePath = path.resolve(ROOT_DIR, normalized);
     if (fs.existsSync(possiblePath)) {
       const raw = fs.readFileSync(possiblePath, 'utf8');
       return JSON.parse(raw);
     }
-    // Also try as absolute path
+    // Try as absolute path
     if (fs.existsSync(normalized)) {
       const raw = fs.readFileSync(normalized, 'utf8');
       return JSON.parse(raw);
     }
   }
 
-  // Try parsing as JSON
+  // Try base64 decode
   try {
-    return JSON.parse(normalized);
-  } catch (error) {
-    // Try base64 decode
-    try {
-      const decoded = Buffer.from(normalized, 'base64').toString('utf8');
+    const decoded = Buffer.from(normalized, 'base64').toString('utf8');
+    if (decoded.startsWith('{')) {
       return JSON.parse(decoded);
-    } catch (decodeError) {
-      throw new Error('Unable to parse service account JSON payload. Provide valid JSON, base64, or file path.');
     }
+    throw new Error('Decoded base64 is not valid JSON');
+  } catch (decodeError) {
+    throw new Error(`Unable to parse service account. Provide valid JSON, base64, or file path. Input starts with: ${normalized.substring(0, 20)}...`);
   }
 };
 
