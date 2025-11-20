@@ -14,10 +14,6 @@ jobs:
         with:
           node-version: 18
 
-      - name: Create service account file
-        run: |
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > service-account.json
-
       - name: Install deps
         run: npm ci
 
@@ -34,6 +30,6 @@ jobs:
 
       - name: Sync auth users
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ./service-account.json
-          FIREBASE_ADMIN_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
         run: npm run sync-auth-users
