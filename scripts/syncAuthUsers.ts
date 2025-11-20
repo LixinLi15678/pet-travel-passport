@@ -21,15 +21,26 @@ const loadEnvFiles = (): void => {
 
 loadEnvFiles();
 
+const normalizeRaw = (value: string): string => {
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+};
+
 const parseInlineServiceAccount = (payload: string): Record<string, unknown> => {
   try {
-    return JSON.parse(payload);
+    return JSON.parse(normalizeRaw(payload));
   } catch (error) {
     try {
-      const decoded = Buffer.from(payload, 'base64').toString('utf8');
+      const decoded = Buffer.from(normalizeRaw(payload), 'base64').toString('utf8');
       return JSON.parse(decoded);
     } catch (decodeError) {
-      const possiblePath = payload.trim();
+      const possiblePath = normalizeRaw(payload);
       if (fs.existsSync(possiblePath)) {
         const raw = fs.readFileSync(possiblePath, 'utf8');
         return JSON.parse(raw);
