@@ -1,13 +1,14 @@
-// Lixin: This file is used to generate the admin console config.
-// Personal used only
+/**
+ Lixin: This script is used to generate the admin console config.
+ Personally used only
+ */
 
-const fs = require('fs');
-const path = require('path');
-const dotenv = require('dotenv');
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
 
-const ROOT_DIR = path.resolve(__dirname, '..', '..');
+const ROOT_DIR = path.resolve(__dirname, '..');
 const OUTPUT_PATH = path.join(ROOT_DIR, 'public', 'admin-console.config.js');
-
 const REQUIRED_KEYS = [
   'REACT_APP_FIREBASE_API_KEY',
   'REACT_APP_FIREBASE_AUTH_DOMAIN',
@@ -29,8 +30,7 @@ interface FirebaseConfig {
 }
 
 const loadEnvFiles = (): void => {
-  const candidates = ['.env.local', '.env'];
-  candidates.forEach((fileName) => {
+  ['.env.local', '.env'].forEach((fileName) => {
     const filePath = path.join(ROOT_DIR, fileName);
     if (fs.existsSync(filePath)) {
       dotenv.config({ path: filePath });
@@ -82,4 +82,5 @@ const run = (): void => {
 };
 
 run();
+
 export {};

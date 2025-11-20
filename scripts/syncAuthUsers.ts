@@ -1,16 +1,17 @@
-// Lixin: This script is used to sync the auth users to the userProfiles collection in the Firebase Firestore.
-// Personally used
+/**
+ Lixin: This script is used to sync the auth users to the userProfiles collection in the Firebase Firestore.
+ Personally used only
+ */
 
-const fs = require('fs');
-const path = require('path');
-const dotenv = require('dotenv');
-const admin = require('firebase-admin');
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+import admin from 'firebase-admin';
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-const loadEnvFiles = () => {
-  const candidates = ['.env.local', '.env'];
-  candidates.forEach((fileName) => {
+const loadEnvFiles = (): void => {
+  ['.env.local', '.env'].forEach((fileName) => {
     const filePath = path.join(ROOT_DIR, fileName);
     if (fs.existsSync(filePath)) {
       dotenv.config({ path: filePath });
@@ -39,8 +40,8 @@ const bootstrap = () => {
   }
   const serviceAccount = resolveCredentials();
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    projectId: process.env.FIREBASE_ADMIN_PROJECT_ID || serviceAccount.project_id
+    credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+    projectId: process.env.FIREBASE_ADMIN_PROJECT_ID || (serviceAccount as any).project_id
   });
 };
 
@@ -63,7 +64,9 @@ const syncUserRecord = async (user: admin.auth.UserRecord): Promise<void> => {
     email: user.email || null,
     displayName: user.displayName || null,
     photoURL: user.photoURL || null,
-    providerIds: user.providerData.map((p) => p?.providerId).filter((v): v is string => Boolean(v)),
+    providerIds: user.providerData
+      .map((p) => p?.providerId)
+      .filter((v): v is string => Boolean(v)),
     createdAt: user.metadata.creationTime || null,
     lastLoginAt: user.metadata.lastSignInTime || null,
     syncedAt: new Date().toISOString()
@@ -96,3 +99,5 @@ const run = async () => {
 };
 
 run();
+
+export {};
