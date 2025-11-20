@@ -25,7 +25,6 @@ const isLegacyPetId = (petId: string | null | undefined): boolean =>
 
 const buildPetProfiles = (
   progressPets: PetProfile[] = [],
-  files: FileInfo[] = [],
   breederPets: PetProfile[] = []
 ): PetProfile[] => {
   const petMap = new Map<string, PetProfile>();
@@ -42,18 +41,7 @@ const buildPetProfiles = (
   progressPets.forEach(upsertPet);
   breederPets.forEach(upsertPet);
 
-  files.forEach((file) => {
-    const petId = file?.petId;
-    if (!petId || isLegacyPetId(petId) || petMap.has(petId)) {
-      return;
-    }
-    petMap.set(petId, {
-      id: petId,
-      createdAt: file?.uploadedAt || new Date().toISOString(),
-      type: 'cat'
-    });
-  });
-
+  // Pet profiles are only created explicitly by user, not auto-generated from orphaned files
   return Array.from(petMap.values());
 };
 
@@ -148,7 +136,7 @@ function App() {
         if (progress?.currentStep) {
           setCurrentPage(progress.currentStep);
         }
-        const normalizedPets = buildPetProfiles(progress?.pets, files, breeder?.pets);
+        const normalizedPets = buildPetProfiles(progress?.pets, breeder?.pets);
         const desiredPetId = (() => {
           if (progress?.activePetId && normalizedPets.some(pet => pet.id === progress.activePetId)) {
             return progress.activePetId;
@@ -339,22 +327,13 @@ function App() {
       setInitialVaccineFiles(dedupedFiles);
     }
 
-    const defaultNewPetType = (
-      petProfiles.find((pet) => pet.id === activePetId) || petProfiles[0]
-    )?.type || 'cat';
-
-    let updatedPets = petProfiles;
+    // Ensure the pet profile exists before associating files
     if (!petProfiles.some((pet) => pet.id === normalizedPetId)) {
-      const newPet: PetProfile = {
-        id: normalizedPetId,
-        createdAt: dedupedFiles[0]?.uploadedAt || new Date().toISOString(),
-        type: defaultNewPetType
-      };
-      updatedPets = [...petProfiles, newPet];
-      setPetProfiles(updatedPets);
+      console.warn(`Pet profile ${normalizedPetId} does not exist. Files will not be saved.`);
+      return;
     }
 
-    const petsForSave = updatedPets;
+    const petsForSave = petProfiles;
 
     if (user) {
       userProgressService.saveProgress(user.uid, {
@@ -377,10 +356,8 @@ function App() {
     }
 
     setPetProfiles((prevPets) => {
-      let found = false;
       const updated = prevPets.map((pet) => {
         if (pet.id === petId) {
-          found = true;
           return {
             ...pet,
             dimensions: newDimensions
@@ -389,19 +366,7 @@ function App() {
         return pet;
       });
 
-      if (!found) {
-        const fallbackType = prevPets.find((pet) => pet.id === petId)?.type || 'cat';
-        return [
-          ...updated,
-          {
-            id: petId,
-            createdAt: new Date().toISOString(),
-            type: fallbackType,
-            dimensions: newDimensions
-          }
-        ];
-      }
-
+      // Only update existing pets, do not auto-create new ones
       return updated;
     });
   }, []);
