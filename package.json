@@ -16,8 +16,8 @@
     "update": "^0.7.4"
   },
   "scripts": {
-    "generate-admin-config": "node -r ts-node/register src/utils/generateAdminConsoleConfig.ts",
-    "sync-auth-users": "node -r ts-node/register scripts/syncAuthUsers.ts",
+    "generate-admin-config": "node -r ts-node/register src/utils/generateAdminConsoleConfig.cts",
+    "sync-auth-users": "node -r ts-node/register scripts/syncAuthUsers.cts",
     "prestart": "npm run generate-admin-config",
     "start": "react-scripts start",
     "prebuild": "npm run generate-admin-config",

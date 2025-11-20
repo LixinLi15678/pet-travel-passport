@@ -1,15 +1,11 @@
 // Lixin: This file is used to generate the admin console config.
 // Personal used only
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
+const fs = require('fs');
+const path = require('path');
+const dotenv = require('dotenv');
 
-const FILE_NAME = fileURLToPath(import.meta.url);
-const DIR_NAME = path.dirname(FILE_NAME);
-
-const ROOT_DIR = path.resolve(DIR_NAME, '..', '..');
+const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const OUTPUT_PATH = path.join(ROOT_DIR, 'public', 'admin-console.config.js');
 
 const REQUIRED_KEYS = [
@@ -86,3 +82,4 @@ const run = (): void => {
 };
 
 run();
+export {};

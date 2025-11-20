@@ -1,15 +1,12 @@
 // Lixin: This script is used to sync the auth users to the userProfiles collection in the Firebase Firestore.
 // Personally used
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-import admin from 'firebase-admin';
+const fs = require('fs');
+const path = require('path');
+const dotenv = require('dotenv');
+const admin = require('firebase-admin');
 
-const FILE_NAME = fileURLToPath(import.meta.url);
-const DIR_NAME = path.dirname(FILE_NAME);
-const ROOT_DIR = path.resolve(DIR_NAME, '..');
+const ROOT_DIR = path.resolve(__dirname, '..');
 
 const loadEnvFiles = () => {
   const candidates = ['.env.local', '.env'];
