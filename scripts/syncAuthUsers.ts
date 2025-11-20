@@ -21,7 +21,7 @@ const loadEnvFiles = (): void => {
 
 loadEnvFiles();
 
-const parseServiceAccount = (payload: string): Record<string, unknown> => {
+const parseInlineServiceAccount = (payload: string): Record<string, unknown> => {
   try {
     return JSON.parse(payload);
   } catch (error) {
@@ -29,7 +29,12 @@ const parseServiceAccount = (payload: string): Record<string, unknown> => {
       const decoded = Buffer.from(payload, 'base64').toString('utf8');
       return JSON.parse(decoded);
     } catch (decodeError) {
-      throw new Error('Unable to parse service account JSON payload.');
+      const possiblePath = payload.trim();
+      if (fs.existsSync(possiblePath)) {
+        const raw = fs.readFileSync(possiblePath, 'utf8');
+        return JSON.parse(raw);
+      }
+      throw new Error('Unable to parse service account JSON payload. Provide valid JSON, base64, or file path.');
     }
   }
 };
@@ -37,7 +42,7 @@ const parseServiceAccount = (payload: string): Record<string, unknown> => {
 const resolveCredentials = () => {
   const inlineJson = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (inlineJson && inlineJson.trim().length > 0) {
-    return parseServiceAccount(inlineJson.trim());
+    return parseInlineServiceAccount(inlineJson.trim());
   }
 
   const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
