@@ -33,18 +33,31 @@ const normalizeRaw = (value: string): string => {
 };
 
 const parseInlineServiceAccount = (payload: string): Record<string, unknown> => {
+  const normalized = normalizeRaw(payload);
+
+  // First check if it's a file path (doesn't start with { or look like base64)
+  if (!normalized.startsWith('{') && !normalized.match(/^[A-Za-z0-9+/=]+$/)) {
+    const possiblePath = path.resolve(ROOT_DIR, normalized);
+    if (fs.existsSync(possiblePath)) {
+      const raw = fs.readFileSync(possiblePath, 'utf8');
+      return JSON.parse(raw);
+    }
+    // Also try as absolute path
+    if (fs.existsSync(normalized)) {
+      const raw = fs.readFileSync(normalized, 'utf8');
+      return JSON.parse(raw);
+    }
+  }
+
+  // Try parsing as JSON
   try {
-    return JSON.parse(normalizeRaw(payload));
+    return JSON.parse(normalized);
   } catch (error) {
+    // Try base64 decode
     try {
-      const decoded = Buffer.from(normalizeRaw(payload), 'base64').toString('utf8');
+      const decoded = Buffer.from(normalized, 'base64').toString('utf8');
       return JSON.parse(decoded);
     } catch (decodeError) {
-      const possiblePath = normalizeRaw(payload);
-      if (fs.existsSync(possiblePath)) {
-        const raw = fs.readFileSync(possiblePath, 'utf8');
-        return JSON.parse(raw);
-      }
       throw new Error('Unable to parse service account JSON payload. Provide valid JSON, base64, or file path.');
     }
   }
