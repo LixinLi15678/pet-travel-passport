@@ -22,10 +22,12 @@ const loadEnvFiles = (): void => {
 loadEnvFiles();
 
 const resolveCredentials = () => {
-  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!serviceAccountJson) {
+  const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!serviceAccountBase64) {
     throw new Error('Missing FIREBASE_SERVICE_ACCOUNT env variable.');
   }
+  // Decode base64 to JSON string
+  const serviceAccountJson = Buffer.from(serviceAccountBase64, 'base64').toString('utf8');
   return JSON.parse(serviceAccountJson);
 };
 
