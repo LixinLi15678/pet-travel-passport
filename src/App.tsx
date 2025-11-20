@@ -235,7 +235,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [db, user]);
+  }, [user]);
 
   const handleAuthSuccess = (authenticatedUser: User) => {
     setUser(authenticatedUser);
