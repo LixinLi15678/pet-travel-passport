@@ -11,7 +11,6 @@ import fileUploadService, { DEFAULT_PET_ID } from './services/fileUploadService'
 import breederService from './services/breederService';
 import { PetProfile, FileInfo, PetDimensions } from './types';
 import './App.css';
-import { isAdminEmail } from './utils/adminAccess';
 
 /**
  * Main App Component - Pet Passport Management System
@@ -199,13 +198,6 @@ function App() {
       if (!user) {
         if (!cancelled) {
           setIsAdmin(false);
-        }
-        return;
-      }
-
-      if (isAdminEmail(user.email)) {
-        if (!cancelled) {
-          setIsAdmin(true);
         }
         return;
       }
