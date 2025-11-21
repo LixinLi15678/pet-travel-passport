@@ -124,6 +124,24 @@
   transform: scale(0.95);
 }
 
+.photo-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.photo-actions .upload-button {
+  flex: 1 1 150px;
+  max-width: none;
+  margin: 0;
+}
+
+.upload-button.secondary {
+  border-color: #9CA3AF;
+  color: #4B5563;
+}
+
 /* File List */
 .file-list-container {
   padding: 20px 36px;
