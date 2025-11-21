@@ -117,6 +117,7 @@ const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
         if (onAuthSuccess) {
           onAuthSuccess(userCredential.user);
         }
+        setIsLogin(true);
       }
     } catch (err) {
       console.error('Auth error:', err);

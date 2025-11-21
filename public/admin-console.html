@@ -10,6 +10,22 @@ Personally used
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pet Passport Admin Console</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg: #f6f8fb;
+            --panel: rgba(255, 255, 255, 0.82);
+            --panel-strong: rgba(255, 255, 255, 0.9);
+            --text: #0f172a;
+            --muted: #6b7280;
+            --accent: #00c6ae;
+            --accent-2: #fbbf24;
+            --danger: #f87171;
+            --border: rgba(15, 23, 42, 0.08);
+            --shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+            --blur: blur(14px);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -17,108 +33,156 @@ Personally used
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f8f9fa;
-            color: #111827;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: radial-gradient(circle at 12% 18%, rgba(0, 198, 174, 0.12), transparent 28%),
+                        radial-gradient(circle at 86% 16%, rgba(251, 191, 36, 0.12), transparent 32%),
+                        radial-gradient(circle at 40% 82%, rgba(124, 58, 237, 0.1), transparent 38%),
+                        var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            padding: 20px;
+            padding: clamp(16px, 3vw, 32px);
             line-height: 1.5;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(125deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.6));
+            pointer-events: none;
+            z-index: -1;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            padding: clamp(8px, 2vw, 12px);
         }
 
         .header,
         .section,
         .auth-card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 12px 30px rgba(17, 24, 39, 0.08);
-            margin-bottom: 24px;
+            background: linear-gradient(140deg, var(--panel), var(--panel-strong));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: clamp(18px, 2.4vw, 28px);
+            box-shadow: var(--shadow);
+            backdrop-filter: var(--blur);
         }
 
         .auth-card {
-            max-width: 420px;
+            max-width: 460px;
             margin: 80px auto;
             text-align: left;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(15, 23, 42, 0.08);
         }
 
         .header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
+            font-size: clamp(26px, 4vw, 34px);
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
         }
 
         .header p {
-            color: #6b7280;
+            color: var(--muted);
         }
 
         .tabs {
             display: flex;
-            gap: 8px;
-            border-bottom: 2px solid #e5e7eb;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 14px;
+            padding: 6px;
             margin-bottom: 16px;
+            border: 1px solid var(--border);
         }
 
         .tab {
             border: none;
             background: none;
-            padding: 12px 16px;
+            padding: 12px 18px;
             font-weight: 600;
-            color: #9ca3af;
+            color: var(--muted);
             cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.18s ease;
         }
 
         .tab.active {
-            color: #ff6b9d;
-            border-bottom: 3px solid #ff6b9d;
+            color: #fff;
+            background: linear-gradient(135deg, #00b59f, #009e8c);
+            box-shadow: 0 12px 28px rgba(0, 157, 140, 0.25);
         }
 
         .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 10px;
         }
 
         .stat-card {
-            background: #fff5f8;
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.86));
+            border-radius: 18px;
+            padding: 18px;
+            text-align: left;
+            border: 1px solid var(--border);
         }
 
         .stat-card h3 {
-            font-size: 32px;
-            color: #ff6b9d;
+            font-size: 34px;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-card p {
+            color: var(--muted);
+            font-size: 14px;
         }
 
         .btn,
         button {
             border: none;
-            border-radius: 999px;
-            padding: 10px 18px;
-            font-weight: 600;
+            border-radius: 12px;
+            padding: 11px 18px;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+            letter-spacing: 0.01em;
+            position: relative;
+            overflow: hidden;
         }
 
         .btn-primary {
-            background: #ff6b9d;
+            background: linear-gradient(120deg, var(--accent), #9ee8db);
             color: #fff;
-            box-shadow: 0 10px 20px rgba(255, 107, 157, 0.3);
+            box-shadow: 0 12px 30px rgba(126, 224, 210, 0.35);
+        }
+
+        .btn-ghost {
+            background: rgba(0, 198, 174, 0.1);
+            color: #0f172a;
+            border: 1px solid rgba(0, 198, 174, 0.3);
         }
 
         .btn-secondary {
-            background: #f3f4f6;
-            color: #111827;
+            background: rgba(255, 255, 255, 0.85);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
         }
 
         .btn-danger {
-            background: #f87171;
+            background: linear-gradient(120deg, #f87171, #f43f5e);
             color: #fff;
         }
 
@@ -135,23 +199,34 @@ Personally used
             margin-bottom: 6px;
             font-size: 13px;
             font-weight: 600;
-            color: #6b7280;
+            color: var(--muted);
         }
 
         .input-group input,
         .input-group select {
             width: 100%;
-            border: 2px solid #e5e7eb;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
             border-radius: 12px;
             padding: 12px;
             font-size: 15px;
+            outline: none;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(126, 224, 210, 0.25);
         }
 
         .list-card {
-            border: 2px solid #e5e7eb;
+            border: 1px solid var(--border);
             border-radius: 16px;
             padding: 16px;
             margin-bottom: 12px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.82));
+            box-shadow: 0 15px 40px rgba(15, 23, 42, 0.18);
         }
 
         .loading,
@@ -159,7 +234,7 @@ Personally used
         .empty-state {
             padding: 40px;
             text-align: center;
-            color: #6b7280;
+            color: var(--muted);
         }
 
         .pet-card-header {
@@ -169,8 +244,8 @@ Personally used
         }
 
         .pet-type-tag {
-            background: rgba(255,107,157,0.12);
-            color: #ff3f81;
+            background: rgba(0, 198, 174, 0.12);
+            color: var(--accent);
             font-weight: 700;
             padding: 4px 10px;
             border-radius: 999px;
@@ -192,12 +267,14 @@ Personally used
         }
 
         .modal-content {
-            background: #fff;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text);
             border-radius: 20px;
             max-width: 520px;
             width: 100%;
             padding: 24px;
             box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
         }
 
         .modal-header {
@@ -212,7 +289,7 @@ Personally used
             background: none;
             font-size: 28px;
             cursor: pointer;
-            color: #9ca3af;
+            color: var(--muted);
         }
 
         .dimensions-grid {
@@ -222,13 +299,78 @@ Personally used
         }
 
         .notice {
-            background: #fff3cd;
-            border: 1px solid #ffe69c;
-            color: #7c5b00;
+            background: rgba(251, 191, 36, 0.16);
+            border: 1px solid rgba(251, 191, 36, 0.45);
+            color: #8a6a00;
             padding: 12px;
             border-radius: 10px;
             margin-bottom: 16px;
             font-size: 14px;
+        }
+
+        .device-chip {
+            padding: 8px 14px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .device-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--accent);
+            display: inline-flex;
+        }
+
+        [data-device="mobile"] .header,
+        [data-device="mobile"] .section {
+            padding: 18px;
+        }
+
+        [data-device="mobile"] .stats {
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        }
+
+        .registered-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 14px;
+            }
+
+            .container {
+                padding: 6px;
+            }
+
+            .header {
+                gap: 12px;
+            }
+
+            .auth-card {
+                margin: 40px auto;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .pet-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
         }
     </style>
 </head>
@@ -240,7 +382,7 @@ Personally used
 
 <div id="authSection" class="auth-card">
     <h1 style="margin-bottom: 16px;">🔐 Admin Login</h1>
-    <p style="color: #6b7280; margin-bottom: 24px;">Use your Firebase admin account to access management tools.</p>
+    <p style="color: var(--muted); margin-bottom: 24px;">Use your Firebase admin account to access management tools.</p>
     <div class="input-group">
         <label for="adminEmail">Email</label>
         <input type="email" id="adminEmail" placeholder="admin@example.com" autocomplete="username">
@@ -256,12 +398,15 @@ Personally used
 <div id="adminConsole" style="display: none;">
     <div class="container">
         <div class="header">
-            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; align-items: center;">
                 <div>
                     <h1>🐾 Pet Passport Admin</h1>
-                    <p>Manage users, pets, and uploaded files</p>
+                    <p>Precision control for users, pets, and uploads</p>
                 </div>
-                <button class="btn btn-danger" onclick="adminLogout()">Logout</button>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap: wrap;">
+                    <div class="device-chip" id="deviceChip"><span class="device-dot"></span><span>Auto layout</span></div>
+                    <button class="btn btn-danger" onclick="adminLogout()">Logout</button>
+                </div>
             </div>
         </div>
 
@@ -282,9 +427,9 @@ Personally used
 
         <div class="section">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab(event, 'usersTab')">Users</button>
-                <button class="tab" onclick="switchTab(event, 'filesTab')">Files</button>
-                <button class="tab" onclick="switchTab(event, 'registeredTab')">Registered Users</button>
+                <button class="tab active" data-target="usersTab" onclick="switchTab(event, 'usersTab')">Users</button>
+                <button class="tab" data-target="filesTab" onclick="switchTab(event, 'filesTab')">Files</button>
+                <button class="tab" data-target="registeredTab" onclick="switchTab(event, 'registeredTab')">Registered Users</button>
             </div>
 
             <div id="usersTab" class="tab-content">
@@ -394,8 +539,31 @@ Personally used
     let registeredUsers = [];
     let currentViewUserId = null;
     let currentEditPet = null;
+    const deviceChip = document.getElementById('deviceChip');
 
     const getCtx = () => window.firebaseContext;
+
+    function isMobile() {
+        return window.matchMedia('(max-width: 900px)').matches || /Mobi|Android/i.test(navigator.userAgent);
+    }
+
+    function applyDeviceMode() {
+        const mobile = isMobile();
+        document.body.dataset.device = mobile ? 'mobile' : 'desktop';
+        if (deviceChip) {
+            const label = deviceChip.querySelector('span:last-child');
+            const dot = deviceChip.querySelector('.device-dot');
+            if (label) {
+                label.textContent = mobile ? 'Mobile auto layout' : 'Desktop auto layout';
+            }
+            if (dot) {
+                dot.style.background = mobile ? '#fbbf24' : '#7ee0d2';
+            }
+        }
+    }
+
+    applyDeviceMode();
+    window.addEventListener('resize', applyDeviceMode);
 
     async function adminLogin() {
         const email = document.getElementById('adminEmail').value;
@@ -419,11 +587,23 @@ Personally used
         await signOut(auth);
     }
 
+    function openRegisteredProfile(userId) {
+        activateTab('usersTab');
+        viewUserDetail(userId);
+    }
+
+    function activateTab(id) {
+        document.querySelectorAll('.tab').forEach(btn => {
+            const target = btn.getAttribute('data-target');
+            btn.classList.toggle('active', target === id);
+        });
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.style.display = tab.id === id ? 'block' : 'none';
+        });
+    }
+
     function switchTab(event, id) {
-        document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
-        document.getElementById(id).style.display = 'block';
+        activateTab(id);
     }
 
     async function loadDashboard() {
@@ -485,8 +665,8 @@ Personally used
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <h3>${identifier}</h3>
-                                <p style="color:#6b7280">UID: ${user.uid}</p>
-                                <p style="color:#9ca3af">Pets: ${user.pets?.length || 0} • Last updated: ${user.lastUpdated ? new Date(user.lastUpdated).toLocaleString() : 'N/A'}</p>
+                                <p style="color:var(--muted)">UID: ${user.uid}</p>
+                                <p style="color:var(--muted)">Pets: ${user.pets?.length || 0} • Last updated: ${user.lastUpdated ? new Date(user.lastUpdated).toLocaleString() : 'N/A'}</p>
                             </div>
                             <div>
                                 <button class="btn btn-primary" onclick="viewUserDetail('${user.uid}')">View</button>
@@ -518,10 +698,19 @@ Personally used
             const identifier = profile.email || 'No email';
             return `
                 <div class="list-card">
-                    <h3>${identifier}</h3>
-                    <p style="color:#6b7280;">UID: ${profile.uid}</p>
-                    ${profile.displayName ? `<p style="color:#9ca3af;">Display Name: ${profile.displayName}</p>` : ''}
-                    <p style="color:#9ca3af;">Last Login: ${profile.lastLoginAt ? new Date(profile.lastLoginAt).toLocaleString() : 'Unknown'}</p>
+                    <div style="display:flex; justify-content: space-between; align-items:flex-start; gap: 12px; flex-wrap: wrap;">
+                        <div>
+                            <h3>${identifier}</h3>
+                            <p style="color:var(--muted);">UID: ${profile.uid}</p>
+                            ${profile.displayName ? `<p style="color:var(--muted);">Display Name: ${profile.displayName}</p>` : ''}
+                            <p style="color:var(--muted);">Last Login: ${profile.lastLoginAt ? new Date(profile.lastLoginAt).toLocaleString() : 'Unknown'}</p>
+                        </div>
+                        <span class="pet-type-tag" style="background:rgba(251,191,36,0.14); color:#fbbf24;">Registered</span>
+                    </div>
+                    <div class="registered-actions">
+                        <button class="btn btn-secondary" onclick="openRegisteredProfile('${profile.uid}')">Open profile</button>
+                        <button class="btn btn-danger" onclick="deleteRegisteredUser('${profile.uid}')">Delete (Auth + DB)</button>
+                    </div>
                 </div>
             `;
         }).join('');
@@ -558,8 +747,8 @@ Personally used
             detail.innerHTML = `
                 <div class="list-card" style="margin-bottom: 16px;">
                     <h2>${identifier}</h2>
-                    <p style="color:#6b7280;">UID: ${userId}</p>
-                    <p style="color:#6b7280">Current Step: ${userData.currentStep || 'N/A'} • Active Pet: ${userData.activePetId || 'None'}</p>
+                    <p style="color:var(--muted);">UID: ${userId}</p>
+                    <p style="color:var(--muted)">Current Step: ${userData.currentStep || 'N/A'} • Active Pet: ${userData.activePetId || 'None'}</p>
                 </div>
                 <div class="list-card" style="margin-bottom: 16px;">
                     <h3 style="margin-bottom: 8px;">Pet Profiles</h3>
@@ -571,7 +760,7 @@ Personally used
                 </div>
                 <div class="list-card" style="margin-top: 16px; border-color:#fecaca;">
                     <h3 style="color:#b91c1c;">Danger Zone</h3>
-                    <p style="color:#6b7280;">Delete this user and all associated data.</p>
+                    <p style="color:var(--muted);">Delete this user and all associated data.</p>
                     <button class="btn btn-danger" onclick="deleteUser('${userId}')">Delete user</button>
                 </div>
             `;
@@ -589,11 +778,11 @@ Personally used
         return pets.map(pet => {
             const dims = pet.dimensions || {};
             return `
-                <div class="list-card" style="border:1px solid #f3f4f6;">
+                <div class="list-card" style="border:1px solid var(--border); background: rgba(255,255,255,0.9);">
                     <div class="pet-card-header">
                         <div>
                             <h4>${pet.name || pet.id || 'Unnamed Pet'}</h4>
-                            <p style="color:#6b7280;">ID: ${pet.id}<br>Created: ${pet.createdAt ? new Date(pet.createdAt).toLocaleString() : 'N/A'}<br>Carrier: ${dims.height || 0}H × ${dims.width || 0}W × ${dims.length || 0}L in</p>
+                            <p style="color:var(--muted);">ID: ${pet.id}<br>Created: ${pet.createdAt ? new Date(pet.createdAt).toLocaleString() : 'N/A'}<br>Carrier: ${dims.height || 0}H × ${dims.width || 0}W × ${dims.length || 0}L in</p>
                         </div>
                         <span class="pet-type-tag">${(pet.type || 'cat').toUpperCase()}</span>
                     </div>
@@ -613,14 +802,14 @@ Personally used
         return files.map(file => {
             const isImage = file.type?.startsWith('image/');
             return `
-                <div class="list-card" style="border:1px solid #f3f4f6;">
+                <div class="list-card" style="border:1px solid var(--border); background: rgba(255,255,255,0.9);">
                     <h4>${file.name || 'Untitled file'}</h4>
-                    <p style="color:#6b7280;">Pet ID: ${file.petId || 'None'}<br>Type: ${file.type || 'N/A'}<br>Uploaded: ${file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : 'N/A'}</p>
+                    <p style="color:var(--muted);">Pet ID: ${file.petId || 'None'}<br>Type: ${file.type || 'N/A'}<br>Uploaded: ${file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : 'N/A'}</p>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <button class="btn btn-secondary" onclick="downloadFile('${file.docId}', '${file.name}', '${file.data || ''}')">Download</button>
                         <button class="btn btn-danger" onclick="deleteFileAndRefresh('${file.docId}')">Delete</button>
                     </div>
-                    ${isImage && file.data ? `<img src="${file.data}" alt="${file.name}" style="margin-top:12px; max-width:160px; border-radius:12px; border:1px solid #f3f4f6;">` : ''}
+                    ${isImage && file.data ? `<img src="${file.data}" alt="${file.name}" style="margin-top:12px; max-width:160px; border-radius:12px; border:1px solid var(--border);">` : ''}
                 </div>
             `;
         }).join('');
@@ -713,27 +902,34 @@ Personally used
         }
     }
 
+    async function deleteUserData(userId) {
+        const { db, doc, deleteDoc, collection, getDocs } = getCtx();
+        const filesSnap = await getDocs(collection(db, 'files'));
+        const deletes = [];
+        filesSnap.forEach(fileDoc => {
+            if (fileDoc.data().userId === userId) {
+                deletes.push(deleteDoc(fileDoc.ref));
+            }
+        });
+        deletes.push(deleteDoc(doc(db, 'userProgress', userId)));
+        deletes.push(deleteDoc(doc(db, 'userProfiles', userId)).catch(() => {}));
+        deletes.push(deleteDoc(doc(db, 'breeders', userId)).catch(() => {}));
+        await Promise.all(deletes);
+    }
+
     async function deleteUser(userId) {
         if (!confirm('Delete this user and ALL data?')) return;
         try {
-            const { db, doc, deleteDoc, collection, getDocs } = getCtx();
-            const filesSnap = await getDocs(collection(db, 'files'));
-            const deletes = [];
-            filesSnap.forEach(fileDoc => {
-                if (fileDoc.data().userId === userId) {
-                    deletes.push(deleteDoc(fileDoc.ref));
-                }
-            });
-            await Promise.all(deletes);
-            await deleteDoc(doc(db, 'userProgress', userId));
-            try {
-                await deleteDoc(doc(db, 'breeders', userId));
-            } catch (_) {}
-            alert('User deleted');
-            loadDashboard();
+            await deleteUserData(userId);
+            alert('User data removed. Auth deletion requires running an admin script (server-side).');
+            await loadDashboard();
         } catch (error) {
             alert(error.message);
         }
+    }
+
+    async function deleteRegisteredUser(userId) {
+        await deleteUser(userId);
     }
 
     async function loadAllFiles() {
@@ -799,6 +995,8 @@ Personally used
     window.loadAllFiles = loadAllFiles;
     window.downloadFile = downloadFile;
     window.deleteFileAndRefresh = deleteFileAndRefresh;
+    window.deleteRegisteredUser = deleteRegisteredUser;
+    // Auth deletion requires Admin SDK/server-side. Frontend only removes Firestore data.
 </script>
 </body>
 </html>
