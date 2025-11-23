@@ -45,9 +45,18 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
   const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
   const [pdfPageWidth, setPdfPageWidth] = useState<number>(520);
   const [showPetsModal, setShowPetsModal] = useState<boolean>(false);
+  const [isMobileDevice, setIsMobileDevice] = useState<boolean>(() => {
+    if (typeof navigator === 'undefined') {
+      return false;
+    }
+    const ua = navigator.userAgent || '';
+    return /iPhone|iPad|iPod|Android/i.test(ua);
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const photoCameraInputRef = useRef<HTMLInputElement>(null);
+  const photoLibraryInputRef = useRef<HTMLInputElement>(null);
   const activePet = activePetId || petProfiles[0]?.id || null;
   const activePetProfile = activePet ? petProfiles.find((pet) => pet.id === activePet) : null;
   const activePetType = activePetProfile?.type === 'dog' ? 'dog' : 'cat';
@@ -190,20 +199,26 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
     setVaccineFiles(initialFiles);
   }, [initialFiles]);
 
-  const uploadsDisabled = isUploading || !activePet;
-  const noPetSelected = !activePet;
-
-  // File upload handler with compression
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!activePet) {
-      alert('Please add a pet profile before uploading documents.');
-      if (event?.target) {
-        event.target.value = '';
-      }
+  useEffect(() => {
+    if (typeof navigator === 'undefined') {
       return;
     }
-    const files = Array.from(event.target.files || []);
-    event.target.value = '';
+    const ua = navigator.userAgent || '';
+    setIsMobileDevice(/iPhone|iPad|iPod|Android/i.test(ua));
+  }, []);
+
+  const uploadsDisabled = isUploading || !activePet;
+  const noPetSelected = !activePet;
+  const fileAcceptValue = isMobileDevice
+    ? 'application/pdf'
+    : 'application/pdf,image/jpeg,image/jpg,image/png';
+  const fileUploadLabel = isMobileDevice ? 'Upload File (PDF)' : 'Upload File (PDF/JPG)';
+
+  const processFiles = async (files: File[]) => {
+    if (!activePet) {
+      alert('Please add a pet profile before uploading documents.');
+      return;
+    }
 
     if (files.length === 0) return;
 
@@ -265,9 +280,66 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
     setIsUploading(false);
   };
 
+  // File upload handler with compression
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (event?.target) {
+      event.target.value = '';
+    }
+    await processFiles(files);
+  };
+
   // Photo upload handler with compression
   const handlePhotoSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    await handleFileSelect(event);
+    const files = Array.from(event.target.files || []);
+    if (event?.target) {
+      event.target.value = '';
+    }
+    await processFiles(files);
+  };
+
+  const handlePhotoCameraClick = () => {
+    photoCameraInputRef.current?.click();
+  };
+
+  const handlePhotoLibraryClick = async () => {
+    const showOpenFilePicker = (window as any).showOpenFilePicker as
+      | ((options: any) => Promise<any[]>)
+      | undefined;
+    if (showOpenFilePicker) {
+      try {
+        const handles = await showOpenFilePicker({
+          multiple: true,
+          types: [
+            {
+              description: 'Images',
+              accept: {
+                'image/*': ['.png', '.jpg', '.jpeg', '.heic', '.heif', '.webp']
+              }
+            }
+          ],
+          excludeAcceptAllOption: true
+        });
+
+        const files = await Promise.all(
+          handles.map((handle: any) =>
+            typeof handle.getFile === 'function' ? handle.getFile() : null
+          )
+        );
+        const validFileEntries = files.filter(Boolean) as File[];
+        if (validFileEntries.length > 0) {
+          await processFiles(validFileEntries);
+        }
+        return;
+      } catch (error: any) {
+        if (error?.name === 'AbortError') {
+          return;
+        }
+        console.error('Image picker error, falling back to input:', error);
+      }
+    }
+
+    photoLibraryInputRef.current?.click();
   };
 
   const handleDownloadPdf = () => {
@@ -588,7 +660,7 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
           <div className="upload-options">
             {/* File Upload */}
             <div className="upload-option">
-              <h3 className="option-title">Upload File (PDF/JPG)</h3>
+              <h3 className="option-title">{fileUploadLabel}</h3>
               <p className="option-description">Official record or vet receipt</p>
               <button
                 className="upload-button"
@@ -600,7 +672,7 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="application/pdf,image/jpeg,image/jpg,image/png"
+                accept={fileAcceptValue}
                 onChange={handleFileSelect}
                 style={{ display: 'none' }}
                 multiple
@@ -613,21 +685,59 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
             <div className="upload-option">
               <h3 className="option-title">Upload Photo(s)</h3>
               <p className="option-description">Clear, well-lit, no glare</p>
-              <button
-                className="upload-button"
-                onClick={() => photoInputRef.current?.click()}
-                disabled={uploadsDisabled}
-              >
-                Choose Photo(s)
-              </button>
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoSelect}
-                style={{ display: 'none' }}
-                multiple
-              />
+              {isMobileDevice ? (
+                <div className="photo-actions">
+                  <button
+                    className="upload-button"
+                    onClick={handlePhotoCameraClick}
+                    disabled={uploadsDisabled}
+                  >
+                    Take Photo
+                  </button>
+                  <button
+                    className="upload-button secondary"
+                    onClick={handlePhotoLibraryClick}
+                    disabled={uploadsDisabled}
+                  >
+                    Photo Library
+                  </button>
+                  <input
+                    ref={photoCameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handlePhotoSelect}
+                    style={{ display: 'none' }}
+                    multiple
+                  />
+                  <input
+                    ref={photoLibraryInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoSelect}
+                    style={{ display: 'none' }}
+                    multiple
+                  />
+                </div>
+              ) : (
+                <>
+                  <button
+                    className="upload-button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={uploadsDisabled}
+                  >
+                    Choose Photo(s)
+                  </button>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoSelect}
+                    style={{ display: 'none' }}
+                    multiple
+                  />
+                </>
+              )}
             </div>
           </div>
 

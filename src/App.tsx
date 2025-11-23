@@ -28,7 +28,6 @@ const isLegacyPetId = (petId: string | null | undefined): boolean =>
 
 const buildPetProfiles = (
   progressPets: PetProfile[] = [],
-  files: FileInfo[] = [],
   breederPets: PetProfile[] = []
 ): PetProfile[] => {
   const petMap = new Map<string, PetProfile>();
@@ -45,18 +44,7 @@ const buildPetProfiles = (
   progressPets.forEach(upsertPet);
   breederPets.forEach(upsertPet);
 
-  files.forEach((file) => {
-    const petId = file?.petId;
-    if (!petId || isLegacyPetId(petId) || petMap.has(petId)) {
-      return;
-    }
-    petMap.set(petId, {
-      id: petId,
-      createdAt: file?.uploadedAt || new Date().toISOString(),
-      type: 'cat'
-    });
-  });
-
+  // Pet profiles are only created explicitly by user, not auto-generated from orphaned files
   return Array.from(petMap.values());
 };
 
@@ -238,13 +226,6 @@ function App() {
       if (!user) {
         if (!cancelled) {
           setIsAdmin(false);
-        }
-        return;
-      }
-
-      if (isAdminEmail(user.email)) {
-        if (!cancelled) {
-          setIsAdmin(true);
         }
         return;
       }
