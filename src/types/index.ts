@@ -18,6 +18,11 @@ export interface PetDimensions {
   weightUnit?: 'kg' | 'lb';
 }
 
+export interface PetWeightEntry {
+  carrier?: string;
+  total?: string;
+}
+
 // File Types
 export interface FileInfo {
   id: string;
@@ -45,12 +50,13 @@ export interface FileValidationResult {
 
 // User Progress Types
 export interface UserProgress {
-  currentStep?: 'main' | 'measure' | 'vaccine';
+  currentStep?: 'main' | 'measure' | 'weight-carrier' | 'weight-total' | 'vaccine';
   reviewReady?: boolean;
   lastFileIds?: string[];
   lastFileCount?: number;
   pets?: PetProfile[];
   activePetId?: string | null;
+  weightEntries?: Record<string, PetWeightEntry>;
 }
 
 // Breeder Types

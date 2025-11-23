@@ -10,7 +10,8 @@ const defaultProgress = (): UserProgress => ({
   lastFileCount: 0,
   activePetId: null,
   pets: [],
-  reviewReady: false
+  reviewReady: false,
+  weightEntries: {}
 });
 
 class UserProgressService {

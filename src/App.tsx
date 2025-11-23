@@ -9,7 +9,7 @@ import Vaccine from './components/Vaccine';
 import userProgressService from './services/userProgressService';
 import fileUploadService, { DEFAULT_PET_ID } from './services/fileUploadService';
 import breederService from './services/breederService';
-import { PetProfile, FileInfo, PetDimensions } from './types';
+import { PetProfile, FileInfo, PetDimensions, PetWeightEntry } from './types';
 import './App.css';
 import { isAdminEmail } from './utils/adminAccess';
 import WeightCarrier from './components/WeightCarrier';
@@ -60,10 +60,16 @@ const buildPetProfiles = (
   return Array.from(petMap.values());
 };
 
-const normalizeStep = (page: string): 'main' | 'measure' | 'vaccine' => {
-  if (page === 'vaccine') return 'vaccine';
-  if (page === 'measure' || page === 'weight-carrier' || page === 'weight-total') {
-    return 'measure';
+type PageName = 'main' | 'measure' | 'weight-carrier' | 'weight-total' | 'vaccine';
+
+const normalizeStep = (page: string): PageName => {
+  if (
+    page === 'measure' ||
+    page === 'weight-carrier' ||
+    page === 'weight-total' ||
+    page === 'vaccine'
+  ) {
+    return page as PageName;
   }
   return 'main';
 };
@@ -73,9 +79,7 @@ function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const [showLoginTip, setShowLoginTip] = useState<boolean>(false);
 
-  const [currentPage, setCurrentPage] = useState<
-    'main' | 'measure' | 'weight-carrier' | 'weight-total' | 'vaccine'
-  >('main');
+  const [currentPage, setCurrentPage] = useState<PageName>('main');
 
   const [initialVaccineFiles, setInitialVaccineFiles] = useState<FileInfo[]>([]);
   const [progressLoaded, setProgressLoaded] = useState<boolean>(false);
@@ -83,6 +87,7 @@ function App() {
   const [activePetId, setActivePetId] = useState<string | null>(null);
   const [allFiles, setAllFiles] = useState<FileInfo[]>([]);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [weightEntries, setWeightEntries] = useState<Record<string, PetWeightEntry>>({});
 
   const persistBreederSnapshot = useCallback(
     (pets: PetProfile[], files: FileInfo[]) => {
@@ -150,6 +155,7 @@ function App() {
       setPetProfiles([]);
       setAllFiles([]);
       setActivePetId(null);
+      setWeightEntries({});
       setProgressLoaded(true);
       return;
     }
@@ -195,6 +201,7 @@ function App() {
         setInitialVaccineFiles(
           desiredPetId ? files.filter((file) => file.petId === desiredPetId) : []
         );
+        setWeightEntries(progress?.weightEntries || {});
 
         userProgressService
           .saveProgress(user.uid, {
@@ -284,52 +291,60 @@ function App() {
     }
   };
 
+  const persistCurrentStep = useCallback(
+    (step: PageName) => {
+      if (!user) return;
+      userProgressService
+        .saveProgress(user.uid, { currentStep: step })
+        .catch((error) => {
+          console.error('Failed to save progress:', error);
+        });
+    },
+    [user]
+  );
+
   const handleBeginSetup = () => {
     if (petProfiles.length === 0) {
       alert('Please add a pet profile before continuing.');
       return;
     }
     setCurrentPage('measure');
-    if (user) {
-      userProgressService
-        .saveProgress(user.uid, { currentStep: 'measure' })
-        .catch((error) => {
-          console.error('Failed to save progress:', error);
-        });
-    }
+    persistCurrentStep('measure');
   };
 
   const handleMeasureNext = () => {
     setCurrentPage('vaccine');
-    if (user) {
-      userProgressService
-        .saveProgress(user.uid, { currentStep: 'vaccine' })
-        .catch((error) => {
-          console.error('Failed to save progress:', error);
-        });
-    }
+    persistCurrentStep('vaccine');
   };
 
   const handleMeasureBack = () => {
     setCurrentPage('main');
-    if (user) {
-      userProgressService
-        .saveProgress(user.uid, { currentStep: 'main' })
-        .catch((error) => {
-          console.error('Failed to save progress:', error);
-        });
-    }
+    persistCurrentStep('main');
   };
+
+  const goToWeightCarrier = useCallback(() => {
+    setCurrentPage('weight-carrier');
+    persistCurrentStep('weight-carrier');
+  }, [persistCurrentStep]);
+
+  const handleWeightCarrierBack = useCallback(() => {
+    setCurrentPage('measure');
+    persistCurrentStep('measure');
+  }, [persistCurrentStep]);
+
+  const goToWeightTotal = useCallback(() => {
+    setCurrentPage('weight-total');
+    persistCurrentStep('weight-total');
+  }, [persistCurrentStep]);
+
+  const handleWeightTotalBack = useCallback(() => {
+    setCurrentPage('weight-carrier');
+    persistCurrentStep('weight-carrier');
+  }, [persistCurrentStep]);
 
   const handleVaccineBack = () => {
     setCurrentPage('measure');
-    if (user) {
-      userProgressService
-        .saveProgress(user.uid, { currentStep: 'measure' })
-        .catch((error) => {
-          console.error('Failed to save progress:', error);
-        });
-    }
+    persistCurrentStep('measure');
   };
 
   const handleVaccineNext = async (data: { vaccineFiles: FileInfo[] }) => {
@@ -462,6 +477,39 @@ function App() {
     []
   );
 
+  const persistWeightEntries = useCallback(
+    (entries: Record<string, PetWeightEntry>) => {
+      if (!user) return;
+      userProgressService
+        .saveProgress(user.uid, { weightEntries: entries })
+        .catch((error) => {
+          console.error('Failed to save weight entries:', error);
+        });
+    },
+    [user]
+  );
+
+  const handleWeightEntryUpdate = useCallback(
+    (petId: string | null, entry: Partial<PetWeightEntry>) => {
+      if (!petId) return;
+      setWeightEntries((prev) => {
+        const previous = prev[petId] || {};
+        const merged = { ...previous, ...entry };
+        const hasCarrier = merged.carrier !== undefined && merged.carrier !== '';
+        const hasTotal = merged.total !== undefined && merged.total !== '';
+        const nextEntries = { ...prev };
+        if (!hasCarrier && !hasTotal) {
+          delete nextEntries[petId];
+        } else {
+          nextEntries[petId] = merged;
+        }
+        persistWeightEntries(nextEntries);
+        return nextEntries;
+      });
+    },
+    [persistWeightEntries]
+  );
+
   const handleDeletePet = useCallback(
     async (petId: string) => {
       if (!petId || isLegacyPetId(petId)) {
@@ -484,6 +532,7 @@ function App() {
 
       const remainingPets = petProfiles.filter((pet) => pet.id !== targetPetId);
       setPetProfiles(remainingPets);
+      handleWeightEntryUpdate(targetPetId, { carrier: '', total: '' });
 
       const nextActive =
         targetPetId === activePetId
@@ -512,7 +561,15 @@ function App() {
 
       persistBreederSnapshot(remainingPets, remainingFiles);
     },
-    [activePetId, allFiles, currentPage, petProfiles, user, persistBreederSnapshot]
+    [
+      activePetId,
+      allFiles,
+      currentPage,
+      petProfiles,
+      user,
+      persistBreederSnapshot,
+      handleWeightEntryUpdate
+    ]
   );
 
   const handlePetChange = useCallback(
@@ -659,6 +716,7 @@ function App() {
         }
         setCurrentPage('main');
         setInitialVaccineFiles([]);
+        setWeightEntries({});
       } catch (error) {
         console.error('Logout error:', error);
       }
@@ -705,7 +763,7 @@ function App() {
       ) : currentPage === 'measure' ? (
         <Measure
           user={user}
-          onNext={() => setCurrentPage('weight-carrier')}
+          onNext={goToWeightCarrier}
           onBack={handleMeasureBack}
           onLogout={handleLogout}
           petProfiles={petProfiles}
@@ -721,8 +779,8 @@ function App() {
       ) : currentPage === 'weight-carrier' ? (
         <WeightCarrier
           user={user}
-          onNext={() => setCurrentPage('weight-total')}
-          onBack={() => setCurrentPage('measure')}
+          onNext={goToWeightTotal}
+          onBack={handleWeightCarrierBack}
           onLogout={handleLogout}
           petProfiles={petProfiles}
           activePetId={activePetId}
@@ -732,12 +790,18 @@ function App() {
           onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
           isAdmin={isAdmin}
+          savedCarrierWeight={
+            activePetId ? weightEntries[activePetId]?.carrier ?? '' : ''
+          }
+          onCarrierWeightChange={(value) =>
+            handleWeightEntryUpdate(activePetId, { carrier: value })
+          }
         />
       ) : currentPage === 'weight-total' ? (
         <WeightTotal
           user={user}
           onNext={handleMeasureNext}
-          onBack={() => setCurrentPage('weight-carrier')}
+          onBack={handleWeightTotalBack}
           onLogout={handleLogout}
           petProfiles={petProfiles}
           activePetId={activePetId}
@@ -747,6 +811,10 @@ function App() {
           onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
           isAdmin={isAdmin}
+          savedTotalWeight={activePetId ? weightEntries[activePetId]?.total ?? '' : ''}
+          onTotalWeightChange={(value) =>
+            handleWeightEntryUpdate(activePetId, { total: value })
+          }
         />
       ) : (
         <Vaccine
