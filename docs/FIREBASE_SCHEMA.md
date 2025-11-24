@@ -56,7 +56,7 @@ Each document stores the current wizard step, which pet profile is active, and t
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `currentStep` | string | Yes | Current wizard step (`"main"`, `"measure"`, `"vaccine"`) |
+| `currentStep` | string | Yes | Current wizard step (`"main"`, `"measure"`, `"weight-carrier"`, `"weight-total"`, `"vaccine"`) |
 | `activePetId` | string | Yes | Pet profile currently selected in the UI |
 | `pets` | array | Yes | List of pet profile metadata (see below) |
 | `lastFileIds` | array of strings | No | Snapshot of the most recent file IDs for the active pet |
@@ -72,6 +72,8 @@ Each document stores the current wizard step, which pet profile is active, and t
 | `name` | string | No | User-provided pet name (required for new profiles, optional for legacy ones) |
 | `createdAt` | string (ISO 8601) | Yes | When the profile was created (or when the first file arrived) |
 | `dimensions` | object | No | Latest carrier measurements saved on the Measure page (`{ "length": "17", "width": "11", "height": "7.5" }`) |
+| `weight` | object | No | Recorded weights in pounds: `{ "carrier": "10", "total": "20" }` |
+| `flight` | object | No | Optional flight metadata `{ "pnr": "ABC123", "number": "MU1234", "date": "2025-12-01" }` |
 
 ### Example `userProgress` document
 
@@ -83,7 +85,10 @@ Each document stores the current wizard step, which pet profile is active, and t
     {
       "id": "pet_1731105600000",
       "name": "Mochi",
-      "createdAt": "2025-11-09T05:50:00.000Z"
+      "createdAt": "2025-11-09T05:50:00.000Z",
+      "dimensions": { "length": 17, "width": 11, "height": 7.5 },
+      "weight": { "carrier": "10", "total": "20" },
+      "flight": { "pnr": "ABC123", "number": "MU1234", "date": "2025-12-01" }
     },
     {
       "id": "pet_1731020000000",

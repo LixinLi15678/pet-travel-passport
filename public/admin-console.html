@@ -494,6 +494,36 @@ Personally used
                 </div>
             </div>
         </div>
+        <div class="input-group">
+            <label>Weight (lbs)</label>
+            <div class="dimensions-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
+                <div>
+                    <label>Carrier</label>
+                    <input type="text" id="editWeightCarrier" inputmode="decimal" placeholder="e.g., 10">
+                </div>
+                <div>
+                    <label>Total</label>
+                    <input type="text" id="editWeightTotal" inputmode="decimal" placeholder="e.g., 20">
+                </div>
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Flight info</label>
+            <div class="dimensions-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+                <div>
+                    <label>PNR</label>
+                    <input type="text" id="editFlightPnr" placeholder="e.g., ABC123">
+                </div>
+                <div>
+                    <label>Flight number</label>
+                    <input type="text" id="editFlightNumber" placeholder="e.g., MU1234">
+                </div>
+                <div>
+                    <label>Flight date</label>
+                    <input type="date" id="editFlightDate">
+                </div>
+            </div>
+        </div>
         <div style="display: flex; gap: 12px; margin-top: 16px;">
             <button class="btn btn-primary" style="flex: 1;" onclick="savePetEdit()">Save</button>
             <button class="btn btn-secondary" style="flex: 1;" onclick="closeEditPetModal()">Cancel</button>
@@ -564,6 +594,34 @@ Personally used
 
     applyDeviceMode();
     window.addEventListener('resize', applyDeviceMode);
+
+    function sanitizeDecimalInput(value, maxDecimals = 2) {
+        const cleaned = (value || '').replace(/[^0-9.]/g, '');
+        const parts = cleaned.split('.');
+        const intPart = (parts.shift() || '').replace(/^0+(?=\d)/, '') || '0';
+        const decimals = parts.join('').slice(0, maxDecimals);
+        if (cleaned.includes('.')) {
+            return `${intPart}.${decimals}`;
+        }
+        return intPart;
+    }
+
+    function attachDecimalLimiters() {
+        const ids = ['editPetHeight', 'editPetWidth', 'editPetLength', 'editWeightCarrier', 'editWeightTotal'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.setAttribute('inputmode', 'decimal');
+            el.addEventListener('input', () => {
+                const next = sanitizeDecimalInput(el.value, 2);
+                if (next !== el.value) {
+                    el.value = next;
+                }
+            });
+        });
+    }
+
+    attachDecimalLimiters();
 
     async function adminLogin() {
         const email = document.getElementById('adminEmail').value;
@@ -777,6 +835,23 @@ Personally used
         }
         return pets.map(pet => {
             const dims = pet.dimensions || {};
+            const weight = pet.weight || {};
+            const hasWeight = !!(weight.carrier || weight.total);
+            const weightLabel = hasWeight
+                ? `${weight.carrier || '—'} carrier / ${weight.total || '—'} total lbs`
+                : 'Not provided';
+            const flight = pet.flight || {};
+            let flightDate = flight.date || '';
+            if (flight.date) {
+                const parsed = new Date(flight.date);
+                flightDate = isNaN(parsed.getTime()) ? flight.date : parsed.toLocaleDateString();
+            }
+            const hasFlight = !!(flight.pnr || flight.number || flightDate);
+            const flightParts = [];
+            if (flight.pnr) flightParts.push(`PNR ${flight.pnr}`);
+            if (flight.number) flightParts.push(`Flight ${flight.number}`);
+            if (flightDate) flightParts.push(`Date ${flightDate}`);
+            const flightLabel = hasFlight ? flightParts.join(' • ') : 'Not provided';
             return `
                 <div class="list-card" style="border:1px solid var(--border); background: rgba(255,255,255,0.9);">
                     <div class="pet-card-header">
@@ -785,6 +860,10 @@ Personally used
                             <p style="color:var(--muted);">ID: ${pet.id}<br>Created: ${pet.createdAt ? new Date(pet.createdAt).toLocaleString() : 'N/A'}<br>Carrier: ${dims.height || 0}H × ${dims.width || 0}W × ${dims.length || 0}L in</p>
                         </div>
                         <span class="pet-type-tag">${(pet.type || 'cat').toUpperCase()}</span>
+                    </div>
+                    <div style="margin-top: 10px; display: grid; gap: 6px; color: var(--muted); font-size: 14px;">
+                        <div><strong>Weight:</strong> ${weightLabel}</div>
+                        <div><strong>Flight:</strong> ${flightLabel}</div>
                     </div>
                     <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
                         <button class="btn btn-primary" onclick="openEditPetModal('${userId}', '${pet.id}')">Edit</button>
@@ -830,6 +909,11 @@ Personally used
         document.getElementById('editPetHeight').value = pet.dimensions?.height || '';
         document.getElementById('editPetWidth').value = pet.dimensions?.width || '';
         document.getElementById('editPetLength').value = pet.dimensions?.length || '';
+        document.getElementById('editWeightCarrier').value = pet.weight?.carrier || '';
+        document.getElementById('editWeightTotal').value = pet.weight?.total || '';
+        document.getElementById('editFlightPnr').value = pet.flight?.pnr || '';
+        document.getElementById('editFlightNumber').value = pet.flight?.number || '';
+        document.getElementById('editFlightDate').value = pet.flight?.date || '';
         document.getElementById('editPetModal').classList.add('active');
     }
 
@@ -842,9 +926,23 @@ Personally used
         if (!currentEditPet) return;
         const name = document.getElementById('editPetName').value.trim();
         const type = document.getElementById('editPetType').value || 'cat';
-        const height = parseFloat(document.getElementById('editPetHeight').value) || 0;
-        const width = parseFloat(document.getElementById('editPetWidth').value) || 0;
-        const length = parseFloat(document.getElementById('editPetLength').value) || 0;
+        const height = parseFloat(sanitizeDecimalInput(document.getElementById('editPetHeight').value, 2)) || 0;
+        const width = parseFloat(sanitizeDecimalInput(document.getElementById('editPetWidth').value, 2)) || 0;
+        const length = parseFloat(sanitizeDecimalInput(document.getElementById('editPetLength').value, 2)) || 0;
+        const carrierWeight = sanitizeDecimalInput(document.getElementById('editWeightCarrier').value.trim(), 2).replace(/\.$/, '');
+        const totalWeight = sanitizeDecimalInput(document.getElementById('editWeightTotal').value.trim(), 2).replace(/\.$/, '');
+        const flightPnr = document.getElementById('editFlightPnr').value.trim();
+        const flightNumber = document.getElementById('editFlightNumber').value.trim();
+        const flightDate = document.getElementById('editFlightDate').value.trim();
+        const weight = carrierWeight || totalWeight ? {
+            ...(carrierWeight ? { carrier: carrierWeight } : {}),
+            ...(totalWeight ? { total: totalWeight } : {})
+        } : null;
+        const flight = flightPnr || flightNumber || flightDate ? {
+            ...(flightPnr ? { pnr: flightPnr } : {}),
+            ...(flightNumber ? { number: flightNumber } : {}),
+            ...(flightDate ? { date: flightDate } : {})
+        } : null;
         try {
             const { db, doc, getDoc, updateDoc } = getCtx();
             const docRef = doc(db, 'userProgress', currentEditPet.userId);
@@ -855,12 +953,26 @@ Personally used
             }
             const data = progress.data();
             const pets = data.pets || [];
-            const updated = pets.map(pet => pet.id === currentEditPet.petId ? {
-                ...pet,
-                name: name || pet.name,
-                type,
-                dimensions: { height, width, length }
-            } : pet);
+            const updated = pets.map(pet => {
+                if (pet.id !== currentEditPet.petId) return pet;
+                const nextPet = {
+                    ...pet,
+                    name: name || pet.name,
+                    type,
+                    dimensions: { height, width, length }
+                };
+                if (weight) {
+                    nextPet.weight = weight;
+                } else {
+                    delete nextPet.weight;
+                }
+                if (flight) {
+                    nextPet.flight = flight;
+                } else {
+                    delete nextPet.flight;
+                }
+                return nextPet;
+            });
             await updateDoc(docRef, { pets: updated, lastUpdated: new Date().toISOString() });
             alert('Pet updated');
             closeEditPetModal();

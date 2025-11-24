@@ -341,8 +341,8 @@ function App() {
   }, [persistCurrentStep]);
 
   const handleVaccineBack = () => {
-    setCurrentPage('measure');
-    persistCurrentStep('measure');
+    setCurrentPage('weight-total');
+    persistCurrentStep('weight-total');
   };
 
   const handleVaccineNext = async (data: { vaccineFiles: FileInfo[] }) => {

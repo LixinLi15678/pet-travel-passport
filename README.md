@@ -63,7 +63,7 @@ See `docs/FIREBASE_SCHEMA.md` for the full schema. Quick reference:
 
 | Collection | Purpose | Key Fields |
 | --- | --- | --- |
-| `userProgress/{userId}` | Wizard UI state + pet list + active pet pointer | `currentStep`, `activePetId`, `pets[]`, `lastFileIds`, `reviewReady`, `lastUpdated` |
+| `userProgress/{userId}` | Wizard UI state + pet list + active pet pointer | `currentStep`, `activePetId`, `pets[]` (with `dimensions`/`weight`/`flight`), `lastFileIds`, `reviewReady`, `lastUpdated` |
 | `files/{userId}_{fileId}` | Each uploaded PDF/image stored directly as base64 | `petId`, `category`, `name`, `size`, `type`, `uploadedAt`, `data`, `source` |
 | `breeders/{userId}` | Denormalized pet roster + lightweight file index | `pets[].files[]`, `updatedAt`, `userId` |
 

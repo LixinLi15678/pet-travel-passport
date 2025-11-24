@@ -3,6 +3,7 @@ import PetsModal from './PetsModal';
 import userProgressService from '../services/userProgressService';
 import { MeasureProps, PetDimensions } from '../types';
 import { openAdminConsole } from '../utils/adminAccess';
+import { sanitizeDecimalInput } from '../utils/input';
 import './shared.css';
 import './Measure.css';
 
@@ -135,8 +136,7 @@ const Measure: React.FC<MeasureProps> = ({
 
   // Handle dimension input changes
   const handleDimensionChange = (field: 'length' | 'width' | 'height', value: string) => {
-    // Allow only numbers and decimals
-    const sanitized = value.replace(/[^0-9.]/g, '');
+    const sanitized = sanitizeDecimalInput(value, 2);
     const newDimensions = {
       ...dimensions,
       [field]: sanitized

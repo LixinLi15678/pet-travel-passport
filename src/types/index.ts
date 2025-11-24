@@ -8,6 +8,7 @@ export interface PetProfile {
   type?: 'cat' | 'dog';
   dimensions?: PetDimensions;
   weight?: PetWeightEntry;
+  flight?: PetFlightInfo;
 }
 
 export interface PetDimensions {
@@ -22,6 +23,12 @@ export interface PetDimensions {
 export interface PetWeightEntry {
   carrier?: string;
   total?: string;
+}
+
+export interface PetFlightInfo {
+  pnr?: string;
+  number?: string;
+  date?: string;
 }
 
 // File Types

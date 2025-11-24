@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { PetProfile, FileInfo } from '../types';
+import { sanitizeDecimalInput } from '../utils/input';
 import './shared.css';
 import './Weight.css';
 
@@ -45,7 +46,7 @@ const WeightTotal: React.FC<WeightTotalProps> = (props) => {
   const MAX_CABIN_WEIGHT = 20;
 
   const handleChange = (value: string) => {
-    const sanitized = value.replace(/[^0-9.]/g, '');
+    const sanitized = sanitizeDecimalInput(value, 2);
     setTotalWeight(sanitized);
     onTotalWeightChange(sanitized);
   };

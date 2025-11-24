@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { PetProfile, FileInfo } from '../types';
+import { sanitizeDecimalInput } from '../utils/input';
 import './shared.css';
 import './Weight.css';
 
@@ -36,7 +37,7 @@ const WeightCarrier: React.FC<WeightCarrierProps> = (props) => {
   const carrierIllustrationSrc = assetPath('Pet Carrier.svg');
 
   const handleChange = (value: string) => {
-    const sanitized = value.replace(/[^0-9.]/g, '');
+    const sanitized = sanitizeDecimalInput(value, 2);
     setCarrierWeight(sanitized);
     onCarrierWeightChange(sanitized);
   };

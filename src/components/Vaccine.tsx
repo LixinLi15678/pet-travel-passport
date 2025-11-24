@@ -829,7 +829,7 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
               onClick={onBack}
               disabled={isUploading}
             >
-              ← Back to Measure
+              ← Back to Weight
             </button>
           </div>
         </div>
