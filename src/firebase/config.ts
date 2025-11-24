@@ -28,24 +28,14 @@ let db: Firestore | null = null;
 let firebaseAvailable = false;
 
 try {
-  // Check if all required config values are present
-  const configValues = Object.values(firebaseConfig);
-  const hasAllConfig = configValues.every(
-    val => val && val !== 'undefined' && !val.includes('your_')
-  );
-
-  if (hasAllConfig) {
-    app = initializeApp(firebaseConfig as any);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    firebaseAvailable = true;
-    console.log('Firebase initialized successfully');
-  } else {
-    console.warn('Firebase configuration incomplete - using local storage fallback');
-  }
+  app = initializeApp(firebaseConfig as any);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  firebaseAvailable = true;
+  console.log('Firebase initialized successfully');
 } catch (error) {
   console.error('Firebase initialization error:', error);
-  console.warn('Falling back to local storage');
+  console.warn('Falling back to local storage. Check your env config values.');
 }
 
 export { auth, db, firebaseAvailable };
