@@ -7,6 +7,7 @@ export interface PetProfile {
   createdAt: string;
   type?: 'cat' | 'dog';
   dimensions?: PetDimensions;
+  weight?: PetWeightEntry;
 }
 
 export interface PetDimensions {
@@ -16,6 +17,11 @@ export interface PetDimensions {
   weight?: number;
   unit?: 'cm' | 'in';
   weightUnit?: 'kg' | 'lb';
+}
+
+export interface PetWeightEntry {
+  carrier?: string;
+  total?: string;
 }
 
 // File Types
@@ -45,7 +51,7 @@ export interface FileValidationResult {
 
 // User Progress Types
 export interface UserProgress {
-  currentStep?: 'main' | 'measure' | 'vaccine';
+  currentStep?: 'main' | 'measure' | 'weight-carrier' | 'weight-total' | 'vaccine';
   reviewReady?: boolean;
   lastFileIds?: string[];
   lastFileCount?: number;
