@@ -28,7 +28,7 @@ A mobile-first wizard for collecting the measurements, documents, and approvals 
 The Pet Travel Passport flow mirrors the hand-off an airline agent expects:
 1. **Auth & Project Setup** – Users sign in, review the wizard status bar, and understand how to log out via the cat icon.
 2. **Measure** – Capture carrier dimensions with live validation (18″ × 11″ × 11″ ceiling) and auto-save them per pet.
-3. **Weight** - Recored carrier weight and pet weight and auto-save and validate them per pet.
+3. **Weight** – Record carrier weight and pet weight and auto-save and validate them per pet.
 4. **Vaccine** – Upload PDF/image proof, drag files to reorder, preview PDFs in-line via `react-pdf`, and compress photos before persisting.
 5. **Review** – Stored files and dimensions feed the eventual “Done” screen plus future PDF exports/QR codes.
 
@@ -38,10 +38,11 @@ The Pet Travel Passport flow mirrors the hand-off an airline agent expects:
 - **Local-first persistence** via `userProgressService` and `fileUploadService`. Firestore syncs when credentials exist; otherwise localStorage keeps progress.
 - **Document ingestion pipeline** with drag-and-drop, bulk upload, serverless compression, PDF paging/zoom, and inline validation (size/MIME).
 - **Accessibility & resiliency**: keyboard focus management in Auth screens, offline-friendly caching, and informative error states.
+- **Weight capture & validation**: a Weight step for recording carrier and pet weight with per-pet persistence and automatic sync via `userProgressService`.
 
 ## Architecture
-- **React 18 + CRA (TypeScript)**: `App.tsx` is the typed state machine that swaps between `main`, `measure`, and `vaccine`, wires Firebase auth, and hands strictly typed callbacks into each step component.
-- **Feature components**: `Auth.tsx`, `MainPage.tsx`, `Measure.tsx`, `Vaccine.tsx`, and `PetsModal.tsx` encapsulate UI logic while sharing `PetProfile`, `PetDimensions`, and `FileInfo` types from `src/types/index.ts`.
+- **React 18 + CRA (TypeScript)**: `App.tsx` is the typed state machine that swaps between `main`, `measure`, `weight`, and `vaccine`, wires Firebase auth, and hands strictly typed callbacks into each step component.
+- **Feature components**: `Auth.tsx`, `MainPage.tsx`, `Measure.tsx`, `WeightCarrier.tsx`, `WeightTotal.tsx`, `Vaccine.tsx`, and `PetsModal.tsx` encapsulate UI logic while sharing `PetProfile`, `PetDimensions`, and `FileInfo` types from `src/types/index.ts`.
 - **Services layer**:  
   - `userProgressService.ts` (wizard state, dimensions, pets)  
   - `fileUploadService.ts` (base64 upload + cache + Firestore)  
@@ -51,7 +52,7 @@ The Pet Travel Passport flow mirrors the hand-off an airline agent expects:
 - **Utilities**: `utils/imageCompression.ts` downsizes images before saving; `react-pdf` + `pdfjs-dist` render previews directly in-browser.
 
 ```
-[Auth] ──▶ [App Shell] ──▶ { MainPage | Measure | Vaccine }
+[Auth] ──▶ [App Shell] ──▶ { MainPage | Measure | Weight | Vaccine }
                     │
                     ├─ userProgressService ──▶ Firestore: userProgress
                     ├─ fileUploadService  ──▶ Firestore: files + localStorage cache
