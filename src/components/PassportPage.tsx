@@ -4,7 +4,12 @@ import "./PassportPage.css";
 
 import { PetProfile, FileInfo } from "../types";
 import { QRCodeCanvas } from "qrcode.react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
+/* ----------------------------------
+   Types
+----------------------------------- */
 interface FlightInfo {
   pnr: string;
   flightNumber: string;
@@ -19,98 +24,91 @@ interface PassportPageProps {
   onBack: () => void;
 }
 
+/* ----------------------------------
+   Component
+----------------------------------- */
 const PassportPage: React.FC<PassportPageProps> = ({
   pet,
   flightInfo,
   onBack,
 }) => {
+
+  /* --- PDF Export --- */
+  const handleExportPDF = async () => {
+    const element = document.querySelector(
+      ".pdf-export-wrapper"
+    ) as HTMLElement | null;
+
+    if (!element) return;
+
+    await new Promise((r) => setTimeout(r, 150));
+
+    const canvas = await html2canvas(
+      element,
+      {
+        scale: 2,
+        useCORS: true,
+        windowWidth: element.scrollWidth,
+      } as any
+    );
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "pt", "a4");
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+    pdf.save(`Pet-Passport-${pet?.name || "Pet"}.pdf`);
+  };
+
+  // QR encoded data
   const qrValue = JSON.stringify({
     petId: pet?.id,
     flight: flightInfo?.flightNumber,
     date: flightInfo?.departureDate,
   });
 
+  /* ----------------------------------
+     RENDER
+  ----------------------------------- */
   return (
-    <div className="page-background">
+    <div className="page-background pdf-export-wrapper">
 
-      {/* HEADER — matches Review page */}
-      <div className="page-header">
-        <div className="header-content">
-          <div className="header-title-section">
-            <h1 className="page-title">Pet Travel Passport</h1>
-            <p className="page-subtitle">Ready to fly</p>
-          </div>
-        </div>
-
-        <div className="header-divider" />
-
-        {/* PROGRESS TRACKER — exact clone */}
-        <div className="progress-section">
-          <div className="step-divider" />
-
-          <div className="progress-step completed">
-            <div className="step-circle">
-              <span className="step-icon">✓</span>
-            </div>
-            <div className="step-label">MEASURE</div>
-          </div>
-
-          <div className="progress-step completed">
-            <div className="step-circle">
-              <span className="step-icon">✓</span>
-            </div>
-            <div className="step-label">WEIGH</div>
-          </div>
-
-          <div className="progress-step completed">
-            <div className="step-circle">
-              <span className="step-icon">✓</span>
-            </div>
-            <div className="step-label">VACCINE</div>
-          </div>
-
-          <div className="progress-step active">
-            <div className="step-circle">
-              <span className="step-number">4</span>
-            </div>
-            <div className="step-label">DONE</div>
-          </div>
-        </div>
-
-        <div className="statusbar-divider" />
+      {/* TOP HEADER (only one, clean) */}
+      <div className="single-header">
+        <h1 className="page-title">Pet Travel Passport</h1>
+        <p className="page-subtitle">Your pet is ready to fly</p>
       </div>
 
       {/* MAIN CONTENT */}
       <main className="page-main">
 
-        {/* GREEN PASSPORT CARD */}
+        {/* GREEN PASSPORT CARD + QR */}
         <div className="passport-card">
           <div className="passport-success-check">✓</div>
 
           <h2 className="passport-title">Travel Passport Generated!</h2>
           <p className="passport-subtitle">
-            Your pet is verified and ready to fly
+            Verified & cleared for travel
           </p>
 
           <div className="passport-flight-box">
             <div className="passport-flight-item">
               <span className="flight-label">Flight</span>
-              <span className="flight-value">
-                {flightInfo?.flightNumber || "—"}
-              </span>
+              <span className="flight-value">{flightInfo?.flightNumber ?? "—"}</span>
             </div>
 
             <div className="passport-flight-item">
               <span className="flight-label">Date</span>
-              <span className="flight-value">
-                {flightInfo?.departureDate || "—"}
-              </span>
+              <span className="flight-value">{flightInfo?.departureDate ?? "—"}</span>
             </div>
 
             <div className="passport-flight-item">
               <span className="flight-label">Total</span>
               <span className="flight-value">
-                {pet?.weight?.total || "—"} lb
+                {pet?.weight?.total ?? "—"} lb
               </span>
             </div>
           </div>
@@ -120,19 +118,26 @@ const PassportPage: React.FC<PassportPageProps> = ({
           </div>
 
           <p className="passport-pnr">
-            PNR: {flightInfo?.pnr || "—"} • Valid for check-in
+            PNR: {flightInfo?.pnr ?? "—"} • Valid for check-in
           </p>
         </div>
 
-        {/* SUMMARY CARD — identical to Review page */}
+        {/* SUMMARY SECTION (directly under QR now) */}
         <div className="review-section">
-
           <div className="review-section-header">
-            <div className="review-icon-pink">📄</div>
+            <img
+              src="/assets/icons/summary.svg"
+              alt="Summary Icon"
+              className="review-icon-pink"
+            />
             <div>
               <h3 className="review-title">Verification Summary</h3>
               <p className="review-subtitle">All compliance checks passed</p>
             </div>
+
+            <button className="export-pdf-btn" onClick={handleExportPDF}>
+              Export PDF
+            </button>
           </div>
 
           <div className="review-divider" />
@@ -141,16 +146,22 @@ const PassportPage: React.FC<PassportPageProps> = ({
             <h4 className="review-inner-label">Carrier Dimensions</h4>
 
             <div className="review-dimensions-row">
-              <div className="review-dim">{pet?.dimensions?.length || "—"}″</div>
-              <div className="review-dim">{pet?.dimensions?.width || "—"}″</div>
-              <div className="review-dim">{pet?.dimensions?.height || "—"}″</div>
+              <div className="review-dim">
+                {pet?.dimensions?.length ?? "—"}″
+              </div>
+              <div className="review-dim">
+                {pet?.dimensions?.width ?? "—"}″
+              </div>
+              <div className="review-dim">
+                {pet?.dimensions?.height ?? "—"}″
+              </div>
             </div>
 
             <h4 className="review-inner-label">Total Weight</h4>
 
             <div className="review-weight-box">
               <div className="review-weight-main">
-                {pet?.weight?.total || "—"} lbs
+                {pet?.weight?.total ?? "—"} lbs
               </div>
               <p className="review-weight-sub">✓ Within 20 lb limit</p>
             </div>

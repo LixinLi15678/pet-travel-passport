@@ -9,16 +9,14 @@
   align-items: center;
 }
 
-
 /* ============================================================
    MAIN WHITE CONTAINER — DO NOT OVERRIDE page-main !!
    (uses shared.css for consistent layout)
 ============================================================ */
 
-
 /* ============================================================
    GREEN PASSPORT CARD
-============================================================ */
+=========================================================== */
 
 .passport-card {
   width: 100%;
@@ -27,7 +25,7 @@
   padding: 48px 32px 42px;
   text-align: center;
   margin-bottom: 32px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 .passport-success-check {
@@ -51,7 +49,6 @@
   color: white;
   margin: 6px 0 26px;
 }
-
 
 /* ============================
    Flight Details Box
@@ -89,7 +86,6 @@
   margin-top: 2px;
 }
 
-
 /* ============================
    QR BOX
 =============================== */
@@ -99,7 +95,7 @@
   padding: 22px;
   border-radius: 20px;
   margin-bottom: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .passport-pnr {
@@ -108,7 +104,6 @@
   margin-top: 4px;
   opacity: 0.95;
 }
-
 
 /* ============================================================
    SUMMARY CARD (Exact clone of Final Review)
@@ -120,10 +115,9 @@
   background: white;
   border-radius: 28px;
   padding: 28px 24px 36px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   margin-bottom: 40px;
 }
-
 
 /* Header with icon */
 .review-section-header {
@@ -155,14 +149,12 @@
   margin-top: 4px;
 }
 
-
 /* Divider */
 .review-divider {
   height: 1px;
   background: #e5e7eb;
   margin: 20px 0 28px;
 }
-
 
 /* Pink inner container */
 .review-inner {
@@ -171,14 +163,12 @@
   border-radius: 20px;
 }
 
-
 /* Section labels */
 .review-inner-label {
   font-size: 15px;
   font-weight: 800;
   margin-bottom: 10px;
 }
-
 
 /* Dimensions row */
 .review-dimensions-row {
@@ -198,7 +188,6 @@
   font-size: 18px;
   text-align: center;
 }
-
 
 /* Weight box */
 .review-weight-box {
@@ -220,7 +209,6 @@
   font-size: 12px;
   color: #10b981;
 }
-
 
 /* Back button */
 .review-back-btn {
@@ -245,13 +233,44 @@
   transform: scale(0.96);
 }
 
+/* ============================
+   Export PDF Button
+============================ */
+
+.export-pdf-btn {
+  padding: 12px 26px;
+  background: linear-gradient(90deg, #f38daf 0%, #d65576 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  border-radius: 30px;     /* pill shape */
+  cursor: pointer;
+  display: inline-block;
+  margin-left: auto;
+  box-shadow: 0 4px 14px rgba(214, 85, 118, 0.35); /* soft pink shadow */
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+/* Hover */
+.export-pdf-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(214, 85, 118, 0.45);
+}
+
+/* Active press */
+.export-pdf-btn:active {
+  transform: scale(0.97);
+}
+
+
 
 
 /* ============================================================
    MOBILE
 ============================================================ */
 
-@media (max-width: 390px) {
+@media (max-width: 490px) {
   .passport-card {
     padding: 38px 22px 34px;
   }
@@ -276,4 +295,13 @@
   .review-weight-main {
     font-size: 26px;
   }
+
+  .review-icon-pink img {
+    width: 400px;
+    height: 28px;
+    object-fit: contain;
+    overflow: hidden;
+  }
+  
+
 }
