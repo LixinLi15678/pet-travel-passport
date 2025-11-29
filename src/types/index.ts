@@ -57,14 +57,26 @@ export interface FileValidationResult {
 }
 
 // User Progress Types
+
+export interface FlightInfo {
+  pnr: string;
+  flightNumber: string;
+  departureDate: string;
+}
+
+
 export interface UserProgress {
-  currentStep?: 'main' | 'measure' | 'weight-carrier' | 'weight-total' | 'vaccine';
+  currentStep?: 'main' | 'measure' | 'weight-carrier' | 'weight-total' | 'vaccine' | 'review' | 'passport';
   reviewReady?: boolean;
   lastFileIds?: string[];
   lastFileCount?: number;
   pets?: PetProfile[];
   activePetId?: string | null;
+
+  // ⭐ ADD THIS
+  flightInfo?: FlightInfo;
 }
+
 
 // Breeder Types
 export interface BreederData {
