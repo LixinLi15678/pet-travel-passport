@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { PetProfile, FileInfo } from '../types';
 import { sanitizeDecimalInput } from '../utils/input';
+import PetsModal from './PetsModal';
+import { openAdminConsole } from '../utils/adminAccess';
 import './shared.css';
 import './Weight.css';
 
@@ -14,8 +16,8 @@ export interface WeightTotalProps {
   activePetId: string | null;
   onPetChange: (petId: string) => void;
   onAddPet: (pet: { name: string; type: 'cat' | 'dog' }) => Promise<string | null>;
-  onDeletePet: (petId: string) => void;
-  onUpdatePetType: (petId: string, type: 'cat' | 'dog') => void;
+  onDeletePet: (petId: string) => Promise<void>;
+  onUpdatePetType: (petId: string, type: 'cat' | 'dog') => Promise<void>;
   allFiles: FileInfo[];
   isAdmin?: boolean;
   savedTotalWeight?: string;
@@ -26,6 +28,8 @@ const WeightTotal: React.FC<WeightTotalProps> = (props) => {
   const { onNext, onBack, savedTotalWeight = '', onTotalWeightChange } = props;
 
   const [totalWeight, setTotalWeight] = useState<string>(savedTotalWeight || '');
+  const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
+  const [showPetsModal, setShowPetsModal] = useState<boolean>(false);
 
   useEffect(() => {
     setTotalWeight(savedTotalWeight || '');
@@ -40,6 +44,9 @@ const WeightTotal: React.FC<WeightTotalProps> = (props) => {
     ? props.petProfiles.find((pet) => pet.id === activePetKey)
     : null;
   const activePetType = activePetProfile?.type === 'dog' ? 'dog' : 'cat';
+  const accountIconSrc = assetPath(
+    activePetType === 'dog' ? 'dog-login.svg' : 'cat-login.svg'
+  );
   const petIllustrationSrc = assetPath(
     activePetType === 'dog' ? 'dog-weight.svg' : 'cat-weight.svg'
   );
@@ -86,14 +93,80 @@ const WeightTotal: React.FC<WeightTotalProps> = (props) => {
       : 'Within cabin limit'
     : 'Enter weight to check limit';
 
+  const handleOpenPetsModal = () => {
+    setShowPetsModal(true);
+    setShowAccountPopup(false);
+  };
+
+  const handleClosePetsModal = () => {
+    setShowPetsModal(false);
+  };
+
+  const handleSelectPet = (petId: string) => {
+    props.onPetChange(petId);
+    setShowPetsModal(false);
+    setShowAccountPopup(false);
+  };
+
   return (
     <div className="page-background">
       <div className="page-header">
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Travel Passport</h1>
+            <h1 className="page-title">Pet Passport</h1>
             <p className="page-subtitle">Recording weight data</p>
           </div>
+          {props.user && (
+            <div className="login-status">
+              <button
+                className="account-icon-button"
+                onClick={() => setShowAccountPopup(!showAccountPopup)}
+              >
+                <img src={accountIconSrc} alt="Account" className="account-icon" />
+              </button>
+              {showAccountPopup && (
+                <div
+                  className="account-popup"
+                  onClick={() => setShowAccountPopup(false)}
+                >
+                  <div
+                    className="account-popup-content"
+                    onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+                  >
+                    <div className="account-popup-header">
+                      <p className="account-email">{props.user.email}</p>
+                      {props.isAdmin && (
+                        <button
+                          className="account-admin-tag"
+                          onClick={() => {
+                            setShowAccountPopup(false);
+                            openAdminConsole();
+                          }}
+                        >
+                          Admin Console
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      className="popup-pets-button"
+                      onClick={handleOpenPetsModal}
+                    >
+                      Pets
+                    </button>
+                    <button
+                      className="popup-logout-button"
+                      onClick={() => {
+                        setShowAccountPopup(false);
+                        props.onLogout();
+                      }}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="header-divider" />
@@ -166,6 +239,7 @@ const WeightTotal: React.FC<WeightTotalProps> = (props) => {
                 id="total-weight"
                 type="text"
                 inputMode="decimal"
+                pattern="\\d*(\\.\\d{0,2})?"
                 className="weight-input"
                 value={totalWeight}
                 onChange={(e) => handleChange(e.target.value)}
@@ -208,6 +282,21 @@ const WeightTotal: React.FC<WeightTotalProps> = (props) => {
           </div>
         </div>
       </main>
+
+      {showPetsModal && (
+        <PetsModal
+          isOpen={showPetsModal}
+          onClose={handleClosePetsModal}
+          petProfiles={props.petProfiles}
+          activePetId={activePetKey}
+          onPetChange={props.onPetChange}
+          onSelectPet={handleSelectPet}
+          onAddPet={props.onAddPet}
+          onDeletePet={props.onDeletePet}
+          onUpdatePetType={props.onUpdatePetType}
+          allFiles={props.allFiles}
+        />
+      )}
     </div>
   );
 };

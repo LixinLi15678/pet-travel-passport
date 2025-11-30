@@ -391,7 +391,7 @@ function App() {
 
     try {
       await userProgressService.saveProgress(user.uid, {
-        currentStep: "vaccine",
+        currentStep: "review",
         reviewReady: true,
         lastFileIds: fileIds,
         lastFileCount: files.length,
@@ -929,6 +929,7 @@ function App() {
           onNext={async (data) => {
             await handleVaccineNext(data);
             setCurrentPage("review"); // GO TO REVIEW PAGE
+            persistCurrentStep("review");
           }}
           onBack={handleVaccineBack}
           onLogout={handleLogout}
@@ -961,17 +962,43 @@ function App() {
               });
             }
           }}
-          onBack={() => setCurrentPage("vaccine")}
+          onBack={() => {
+            setCurrentPage("vaccine");
+            persistCurrentStep("vaccine");
+          }}
           onLogout={handleLogout}
-          onNext={() => setCurrentPage("passport")} // GO TO PASSPORT PAGE
+          onNext={() => {
+            setCurrentPage("passport"); // GO TO PASSPORT PAGE
+            persistCurrentStep("passport");
+          }}
+          onPetChange={handlePetChange}
+          onAddPet={handleAddPet}
+          onDeletePet={handleDeletePet}
+          onUpdatePetType={handleUpdatePetType}
+          isAdmin={isAdmin}
         />
       ) : currentPage === "passport" ? (
         <PassportPage
           pet={petProfiles.find((p) => p.id === activePetId) || null}
-          files={allFiles}
+          allFiles={allFiles}
           flightInfo={flightInfo}
           userEmail={user.email || ""}
-          onBack={() => setCurrentPage("review")}
+          petProfiles={petProfiles}
+          activePetId={activePetId}
+          onPetChange={handlePetChange}
+          onAddPet={handleAddPet}
+          onDeletePet={handleDeletePet}
+          onUpdatePetType={handleUpdatePetType}
+          onLogout={handleLogout}
+          onBack={() => {
+            setCurrentPage("review");
+            persistCurrentStep("review");
+          }}
+          onHome={() => {
+            setCurrentPage("main");
+            persistCurrentStep("main");
+          }}
+          isAdmin={isAdmin}
         />
       ) : null}
     </div>
