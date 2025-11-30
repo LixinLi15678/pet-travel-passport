@@ -6,12 +6,12 @@
    ================ */
 
 .page-background {
-  min-height: 100vh;
+  height: 100vh;
   background: #F8F9FA;
   display: flex;
   flex-direction: column;
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* ===============
@@ -23,7 +23,7 @@
   padding: 0;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 300;
   flex-shrink: 0;
 }
 
