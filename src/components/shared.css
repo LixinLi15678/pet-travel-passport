@@ -10,6 +10,8 @@
   background: #F8F9FA;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 /* ===============
