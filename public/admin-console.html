@@ -841,15 +841,15 @@ Personally used
                 ? `${weight.carrier || '—'} carrier / ${weight.total || '—'} total lbs`
                 : 'Not provided';
             const flight = pet.flight || {};
-            let flightDate = flight.date || '';
-            if (flight.date) {
-                const parsed = new Date(flight.date);
-                flightDate = isNaN(parsed.getTime()) ? flight.date : parsed.toLocaleDateString();
+            let flightDate = flight.departureDate || '';
+            if (flight.departureDate) {
+                const parsed = new Date(flight.departureDate);
+                flightDate = isNaN(parsed.getTime()) ? flight.departureDate : parsed.toLocaleDateString();
             }
-            const hasFlight = !!(flight.pnr || flight.number || flightDate);
+            const hasFlight = !!(flight.pnr || flight.flightNumber || flightDate);
             const flightParts = [];
             if (flight.pnr) flightParts.push(`PNR ${flight.pnr}`);
-            if (flight.number) flightParts.push(`Flight ${flight.number}`);
+            if (flight.flightNumber) flightParts.push(`Flight ${flight.flightNumber}`);
             if (flightDate) flightParts.push(`Date ${flightDate}`);
             const flightLabel = hasFlight ? flightParts.join(' • ') : 'Not provided';
             return `
@@ -912,8 +912,8 @@ Personally used
         document.getElementById('editWeightCarrier').value = pet.weight?.carrier || '';
         document.getElementById('editWeightTotal').value = pet.weight?.total || '';
         document.getElementById('editFlightPnr').value = pet.flight?.pnr || '';
-        document.getElementById('editFlightNumber').value = pet.flight?.number || '';
-        document.getElementById('editFlightDate').value = pet.flight?.date || '';
+        document.getElementById('editFlightNumber').value = pet.flight?.flightNumber || '';
+        document.getElementById('editFlightDate').value = pet.flight?.departureDate || '';
         document.getElementById('editPetModal').classList.add('active');
     }
 
@@ -940,8 +940,8 @@ Personally used
         } : null;
         const flight = flightPnr || flightNumber || flightDate ? {
             ...(flightPnr ? { pnr: flightPnr } : {}),
-            ...(flightNumber ? { number: flightNumber } : {}),
-            ...(flightDate ? { date: flightDate } : {})
+            ...(flightNumber ? { flightNumber: flightNumber } : {}),
+            ...(flightDate ? { departureDate: flightDate } : {})
         } : null;
         try {
             const { db, doc, getDoc, updateDoc } = getCtx();

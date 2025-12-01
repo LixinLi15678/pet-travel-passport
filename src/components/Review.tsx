@@ -1,25 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./shared.css";
 import "./Review.css";
 
 import { User } from "firebase/auth";
-import { PetProfile, FileInfo } from "../types";
+import { PetProfile, FileInfo, PetFlightInfo } from "../types";
 import PetsModal from "./PetsModal";
 import { openAdminConsole } from "../utils/adminAccess";
-
-interface FlightInfo {
-  pnr: string;
-  flightNumber: string;
-  departureDate: string;
-}
 
 interface ReviewProps {
   user: User;
   petProfiles: PetProfile[];
   activePetId: string | null;
   allFiles: FileInfo[];
-  flightInfo: FlightInfo | null; // ← ADDED
-  onUpdateFlightInfo: (flightInfo: FlightInfo) => Promise<void>; // ← ADDED (writes to Firebase)
+  onUpdatePetFlightInfo: (petId: string, flightInfo: PetFlightInfo) => Promise<void>;
   onBack: () => void;
   onLogout: () => void;
   onNext: () => void;
@@ -33,8 +26,7 @@ interface ReviewProps {
 
 const Review: React.FC<ReviewProps> = (props) => {
   const {
-    flightInfo,
-    onUpdateFlightInfo,
+    onUpdatePetFlightInfo,
     onBack,
     onNext,
     petProfiles,
@@ -49,14 +41,6 @@ const Review: React.FC<ReviewProps> = (props) => {
     isAdmin,
   } = props;
   const [editing, setEditing] = useState(false);
-
-  const [pnr, setPnr] = useState(flightInfo?.pnr || "");
-  const [flightNumber, setFlightNumber] = useState(
-    flightInfo?.flightNumber || ""
-  );
-  const [departureDate, setDepartureDate] = useState(
-    flightInfo?.departureDate || ""
-  );
   const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
   const [showPetsModal, setShowPetsModal] = useState<boolean>(false);
 
@@ -69,13 +53,36 @@ const Review: React.FC<ReviewProps> = (props) => {
     activePetType === "dog" ? "dog-login.svg" : "cat-login.svg"
   }`;
 
+  // Get flight info from active pet
+  const activePetFlightInfo = activePetProfile?.flight;
+
+  const [pnr, setPnr] = useState(activePetFlightInfo?.pnr || "");
+  const [flightNumber, setFlightNumber] = useState(
+    activePetFlightInfo?.flightNumber || ""
+  );
+  const [departureDate, setDepartureDate] = useState(
+    activePetFlightInfo?.departureDate || ""
+  );
+
+  // Update form when active pet changes
+  useEffect(() => {
+    setPnr(activePetFlightInfo?.pnr || "");
+    setFlightNumber(activePetFlightInfo?.flightNumber || "");
+    setDepartureDate(activePetFlightInfo?.departureDate || "");
+  }, [activePetId, activePetFlightInfo]);
+
   const saveFlightDetails = async () => {
     if (!pnr || !flightNumber || !departureDate) {
       alert("Please fill in all fields.");
       return;
     }
 
-    await onUpdateFlightInfo({
+    if (!activePet) {
+      alert("No active pet selected.");
+      return;
+    }
+
+    await onUpdatePetFlightInfo(activePet, {
       pnr,
       flightNumber,
       departureDate,
@@ -248,15 +255,15 @@ const Review: React.FC<ReviewProps> = (props) => {
               <div className="review-flight-box">
                 <div className="review-flight-row">
                   <span className="review-flight-label">PNR</span>
-                  <span className="review-flight-value">{flightInfo?.pnr || "—"}</span>
+                  <span className="review-flight-value">{activePetFlightInfo?.pnr || "—"}</span>
                 </div>
                 <div className="review-flight-row">
                   <span className="review-flight-label">Flight Number</span>
-                  <span className="review-flight-value">{flightInfo?.flightNumber || "—"}</span>
+                  <span className="review-flight-value">{activePetFlightInfo?.flightNumber || "—"}</span>
                 </div>
                 <div className="review-flight-row">
                   <span className="review-flight-label">Departure Date</span>
-                  <span className="review-flight-value">{flightInfo?.departureDate || "—"}</span>
+                  <span className="review-flight-value">{activePetFlightInfo?.departureDate || "—"}</span>
                 </div>
               </div>
             ) : (

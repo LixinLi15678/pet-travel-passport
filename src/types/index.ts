@@ -27,8 +27,8 @@ export interface PetWeightEntry {
 
 export interface PetFlightInfo {
   pnr?: string;
-  number?: string;
-  date?: string;
+  flightNumber?: string;
+  departureDate?: string;
 }
 
 // File Types
@@ -58,13 +58,6 @@ export interface FileValidationResult {
 
 // User Progress Types
 
-export interface FlightInfo {
-  pnr: string;
-  flightNumber: string;
-  departureDate: string;
-}
-
-
 export interface UserProgress {
   currentStep?: 'main' | 'measure' | 'weight-carrier' | 'weight-total' | 'vaccine' | 'review' | 'passport';
   reviewReady?: boolean;
@@ -72,9 +65,7 @@ export interface UserProgress {
   lastFileCount?: number;
   pets?: PetProfile[];
   activePetId?: string | null;
-
-  // ⭐ ADD THIS
-  flightInfo?: FlightInfo;
+  // flightInfo moved to individual PetProfile.flight
 }
 
 

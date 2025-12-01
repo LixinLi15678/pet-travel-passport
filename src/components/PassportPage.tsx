@@ -12,16 +12,9 @@ import { openAdminConsole } from "../utils/adminAccess";
 /* ----------------------------------
    Types
 ----------------------------------- */
-interface FlightInfo {
-  pnr: string;
-  flightNumber: string;
-  departureDate: string;
-}
-
 interface PassportPageProps {
   pet: PetProfile | null;
   allFiles: FileInfo[];
-  flightInfo: FlightInfo | null;
   userEmail: string;
   petProfiles: PetProfile[];
   activePetId: string | null;
@@ -41,7 +34,6 @@ interface PassportPageProps {
 const PassportPage: React.FC<PassportPageProps> = (props) => {
   const {
     pet,
-    flightInfo,
     userEmail,
     petProfiles,
     activePetId,
@@ -114,11 +106,11 @@ const PassportPage: React.FC<PassportPageProps> = (props) => {
     setShowAccountPopup(false);
   };
 
-  // QR encoded data
+  // QR encoded data - use pet's flight info
   const qrValue = JSON.stringify({
     petId: pet?.id,
-    flight: flightInfo?.flightNumber,
-    date: flightInfo?.departureDate,
+    flight: pet?.flight?.flightNumber,
+    date: pet?.flight?.departureDate,
   });
 
   /* ----------------------------------
@@ -236,12 +228,12 @@ const PassportPage: React.FC<PassportPageProps> = (props) => {
           <div className="passport-flight-box">
             <div className="passport-flight-item">
               <span className="flight-label">Flight</span>
-              <span className="flight-value">{flightInfo?.flightNumber ?? "—"}</span>
+              <span className="flight-value">{pet?.flight?.flightNumber ?? "—"}</span>
             </div>
 
             <div className="passport-flight-item">
               <span className="flight-label">Date</span>
-              <span className="flight-value">{flightInfo?.departureDate ?? "—"}</span>
+              <span className="flight-value">{pet?.flight?.departureDate ?? "—"}</span>
             </div>
 
             <div className="passport-flight-item">
@@ -257,7 +249,7 @@ const PassportPage: React.FC<PassportPageProps> = (props) => {
           </div>
 
           <p className="passport-pnr">
-            PNR: {flightInfo?.pnr ?? "—"} • Valid for check-in
+            PNR: {pet?.flight?.pnr ?? "—"} • Valid for check-in
           </p>
         </div>
 

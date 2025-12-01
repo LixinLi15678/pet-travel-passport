@@ -70,12 +70,6 @@ const normalizeStep = (page: string): PageName => {
   return "main";
 };
 
-type FlightInfo = {
-  pnr: string;
-  flightNumber: string;
-  departureDate: string;
-};
-
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -94,7 +88,6 @@ function App() {
   const [weightEntries, setWeightEntries] = useState<
     Record<string, PetWeightEntry>
   >({});
-  const [flightInfo, setFlightInfo] = useState<FlightInfo | null>(null);
 
   const persistBreederSnapshot = useCallback(
     (pets: PetProfile[], files: FileInfo[]) => {
@@ -161,7 +154,6 @@ function App() {
       setAllFiles([]);
       setActivePetId(null);
       setWeightEntries({});
-      setFlightInfo(null);
       setProgressLoaded(true);
       return;
     }
@@ -201,14 +193,34 @@ function App() {
               | undefined
           )?.weightEntries || {};
 
+        // 🔹 Migration: Move legacy flightInfo to active pet if exists
+        const legacyFlightInfo = (progress as any)?.flightInfo as {
+          pnr?: string;
+          flightNumber?: string;
+          departureDate?: string;
+        } | undefined;
+
         const enrichedPets = normalizedPets.map((pet) => {
+          let updatedPet = { ...pet };
+
           if (!pet.weight && fallbackWeights[pet.id]) {
-            return {
-              ...pet,
-              weight: fallbackWeights[pet.id],
+            updatedPet.weight = fallbackWeights[pet.id];
+          }
+
+          // Migrate legacy flightInfo to active pet if it doesn't already have flight info
+          if (
+            legacyFlightInfo &&
+            !pet.flight &&
+            pet.id === (progress?.activePetId || normalizedPets[0]?.id)
+          ) {
+            updatedPet.flight = {
+              pnr: legacyFlightInfo.pnr,
+              flightNumber: legacyFlightInfo.flightNumber,
+              departureDate: legacyFlightInfo.departureDate,
             };
           }
-          return pet;
+
+          return updatedPet;
         });
 
         const desiredPetId = (() => {
@@ -240,11 +252,6 @@ function App() {
           }
         });
         setWeightEntries(initialWeights);
-
-        // 🔹 Load saved flight info if it exists
-        if ((progress as any)?.flightInfo) {
-          setFlightInfo((progress as any).flightInfo as FlightInfo);
-        }
 
         userProgressService
           .saveProgress(user.uid, {
@@ -823,7 +830,6 @@ function App() {
         setCurrentPage("main");
         setInitialVaccineFiles([]);
         setWeightEntries({});
-        setFlightInfo(null);
       } catch (error) {
         console.error("Logout error:", error);
       }
@@ -950,16 +956,20 @@ function App() {
           petProfiles={petProfiles}
           activePetId={activePetId}
           allFiles={allFiles}
-          flightInfo={flightInfo}
-          onUpdateFlightInfo={async (info) => {
-            setFlightInfo(info); // STORE FLIGHT INFO LOCALLY
+          onUpdatePetFlightInfo={async (petId, flightInfo) => {
+            // Update the specific pet's flight info
+            const updatedPets = petProfiles.map((pet) =>
+              pet.id === petId ? { ...pet, flight: flightInfo } : pet
+            );
+            setPetProfiles(updatedPets);
+
             if (user) {
               await userProgressService.saveProgress(user.uid, {
-                flightInfo: info,
                 currentStep: "review",
-                pets: petProfiles,
+                pets: updatedPets,
                 activePetId,
               });
+              persistBreederSnapshot(updatedPets, allFiles);
             }
           }}
           onBack={() => {
@@ -981,7 +991,6 @@ function App() {
         <PassportPage
           pet={petProfiles.find((p) => p.id === activePetId) || null}
           allFiles={allFiles}
-          flightInfo={flightInfo}
           userEmail={user.email || ""}
           petProfiles={petProfiles}
           activePetId={activePetId}
