@@ -146,6 +146,56 @@ Personally used
             font-size: 14px;
         }
 
+        .control-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            border: 1px dashed rgba(0, 198, 174, 0.4);
+            background: rgba(0, 198, 174, 0.08);
+            padding: 14px 16px;
+            border-radius: 16px;
+            margin-top: 10px;
+        }
+
+        .muted-label {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            margin-bottom: 4px;
+        }
+
+        .access-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .pill-enabled {
+            color: #16a34a;
+            border-color: rgba(22, 163, 74, 0.3);
+            background: rgba(22, 163, 74, 0.08);
+        }
+
+        .pill-disabled {
+            color: #b91c1c;
+            border-color: rgba(185, 28, 28, 0.2);
+            background: rgba(185, 28, 28, 0.08);
+        }
+
+        .access-updated {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
         .btn,
         button {
             border: none;
@@ -410,6 +460,18 @@ Personally used
             </div>
         </div>
 
+        <div class="control-card">
+            <div>
+                <p class="muted-label">Non-admin read/write</p>
+                <div id="accessControlStatus" class="access-pill">Loading...</div>
+                <p id="accessControlUpdated" class="access-updated"></p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" onclick="loadAccessControl()">Refresh</button>
+                <button class="btn btn-danger" id="toggleAccessBtn" onclick="toggleAccessControl()" disabled>Loading...</button>
+            </div>
+        </div>
+
         <div class="stats">
             <div class="stat-card">
                 <h3 id="totalUsers">0</h3>
@@ -569,6 +631,7 @@ Personally used
     let registeredUsers = [];
     let currentViewUserId = null;
     let currentEditPet = null;
+    let accessControlState = { nonAdminAccessEnabled: true, updatedAt: null, updatedBy: null };
     const deviceChip = document.getElementById('deviceChip');
 
     const getCtx = () => window.firebaseContext;
@@ -623,6 +686,91 @@ Personally used
 
     attachDecimalLimiters();
 
+    function renderAccessControl() {
+        const statusEl = document.getElementById('accessControlStatus');
+        const updatedEl = document.getElementById('accessControlUpdated');
+        const toggleBtn = document.getElementById('toggleAccessBtn');
+        const enabled = !!accessControlState.nonAdminAccessEnabled;
+
+        if (statusEl) {
+            statusEl.textContent = enabled ? 'Enabled for non-admins' : 'Disabled for non-admins';
+            statusEl.classList.remove('pill-enabled', 'pill-disabled');
+            statusEl.classList.add(enabled ? 'pill-enabled' : 'pill-disabled', 'access-pill');
+        }
+
+        if (updatedEl) {
+            if (accessControlState.updatedAt) {
+                const timestamp = new Date(accessControlState.updatedAt).toLocaleString();
+                const actor = accessControlState.updatedBy || 'unknown';
+                updatedEl.textContent = `Updated ${timestamp} by ${actor}`;
+            } else {
+                updatedEl.textContent = 'No changes recorded yet.';
+            }
+        }
+
+        if (toggleBtn) {
+            toggleBtn.disabled = false;
+            toggleBtn.classList.remove('btn-danger', 'btn-primary', 'btn-secondary');
+            toggleBtn.classList.add(enabled ? 'btn-danger' : 'btn-primary');
+            toggleBtn.textContent = enabled ? 'Disable non-admin access' : 'Enable non-admin access';
+        }
+    }
+
+    async function loadAccessControl() {
+        const statusEl = document.getElementById('accessControlStatus');
+        const updatedEl = document.getElementById('accessControlUpdated');
+        const toggleBtn = document.getElementById('toggleAccessBtn');
+        if (statusEl) statusEl.textContent = 'Loading...';
+        if (updatedEl) updatedEl.textContent = '';
+        if (toggleBtn) toggleBtn.disabled = true;
+        try {
+            const { db, doc, getDoc } = getCtx();
+            const snap = await getDoc(doc(db, 'adminSettings', 'accessControl'));
+            if (snap.exists()) {
+                const data = snap.data() || {};
+                accessControlState = {
+                    nonAdminAccessEnabled: data.nonAdminAccessEnabled !== false,
+                    updatedAt: data.updatedAt || null,
+                    updatedBy: data.updatedBy || null
+                };
+            } else {
+                accessControlState = { nonAdminAccessEnabled: true, updatedAt: null, updatedBy: null };
+            }
+            renderAccessControl();
+        } catch (error) {
+            console.error('Failed to load access control:', error);
+            if (statusEl) statusEl.textContent = 'Failed to load';
+            if (updatedEl) updatedEl.textContent = error.message || 'Unable to load access control';
+            if (toggleBtn) toggleBtn.disabled = false;
+        }
+    }
+
+    async function toggleAccessControl() {
+        const toggleBtn = document.getElementById('toggleAccessBtn');
+        if (toggleBtn) toggleBtn.disabled = true;
+        const nextEnabled = !accessControlState.nonAdminAccessEnabled;
+        const now = new Date().toISOString();
+        try {
+            const { db, doc, setDoc, auth } = getCtx();
+            const updatedBy = (auth?.currentUser?.email) || auth?.currentUser?.uid || 'unknown';
+            await setDoc(
+                doc(db, 'adminSettings', 'accessControl'),
+                {
+                    nonAdminAccessEnabled: nextEnabled,
+                    updatedAt: now,
+                    updatedBy
+                },
+                { merge: true }
+            );
+            accessControlState = { nonAdminAccessEnabled: nextEnabled, updatedAt: now, updatedBy };
+            renderAccessControl();
+        } catch (error) {
+            console.error('Failed to update access control:', error);
+            alert(error.message || 'Failed to update access control');
+            if (toggleBtn) toggleBtn.disabled = false;
+        }
+    }
+
     async function adminLogin() {
         const email = document.getElementById('adminEmail').value;
         const password = document.getElementById('adminPassword').value;
@@ -665,7 +813,7 @@ Personally used
     }
 
     async function loadDashboard() {
-        await Promise.all([loadUsers(), loadAllFiles()]);
+        await Promise.all([loadUsers(), loadAllFiles(), loadAccessControl()]);
         updateStats();
     }
 
@@ -1108,6 +1256,8 @@ Personally used
     window.downloadFile = downloadFile;
     window.deleteFileAndRefresh = deleteFileAndRefresh;
     window.deleteRegisteredUser = deleteRegisteredUser;
+    window.loadAccessControl = loadAccessControl;
+    window.toggleAccessControl = toggleAccessControl;
     // Auth deletion requires Admin SDK/server-side. Frontend only removes Firestore data.
 </script>
 </body>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase/config";
 import Auth from "./components/Auth";
 
@@ -56,6 +56,12 @@ type PageName =
   | "review"
   | "passport";
 
+type AccessControlState = {
+  nonAdminAccessEnabled: boolean;
+  updatedAt?: string | null;
+  updatedBy?: string | null;
+};
+
 const normalizeStep = (page: string): PageName => {
   if (
     page === "measure" ||
@@ -85,6 +91,12 @@ function App() {
   const [activePetId, setActivePetId] = useState<string | null>(null);
   const [allFiles, setAllFiles] = useState<FileInfo[]>([]);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [adminCheckComplete, setAdminCheckComplete] = useState<boolean>(false);
+  const [accessControl, setAccessControl] = useState<AccessControlState>({
+    nonAdminAccessEnabled: true,
+  });
+  const [accessControlLoaded, setAccessControlLoaded] =
+    useState<boolean>(false);
   const [weightEntries, setWeightEntries] = useState<
     Record<string, PetWeightEntry>
   >({});
@@ -125,6 +137,39 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!db) {
+      setAccessControlLoaded(true);
+      return;
+    }
+
+    const accessDocRef = doc(db, "adminSettings", "accessControl");
+
+    const unsubscribe = onSnapshot(
+      accessDocRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data() as Partial<AccessControlState>;
+          setAccessControl({
+            nonAdminAccessEnabled: data.nonAdminAccessEnabled !== false,
+            updatedAt: data.updatedAt || null,
+            updatedBy: data.updatedBy || null,
+          });
+        } else {
+          setAccessControl({ nonAdminAccessEnabled: true });
+        }
+        setAccessControlLoaded(true);
+      },
+      (error) => {
+        console.error("Failed to load access control settings:", error);
+        setAccessControl({ nonAdminAccessEnabled: true });
+        setAccessControlLoaded(true);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [db]);
+
+  useEffect(() => {
     const syncProfile = async () => {
       if (!user || !db) return;
       try {
@@ -149,6 +194,20 @@ function App() {
   useEffect(() => {
     if (!user) {
       setCurrentPage("main");
+      setInitialVaccineFiles([]);
+      setPetProfiles([]);
+      setAllFiles([]);
+      setActivePetId(null);
+      setWeightEntries({});
+      setProgressLoaded(true);
+      return;
+    }
+
+    if (!accessControlLoaded) {
+      return;
+    }
+
+    if (!isAdmin && !accessControl.nonAdminAccessEnabled) {
       setInitialVaccineFiles([]);
       setPetProfiles([]);
       setAllFiles([]);
@@ -278,16 +337,27 @@ function App() {
     return () => {
       isCancelled = true;
     };
-  }, [user, persistBreederSnapshot]);
+  }, [
+    user,
+    persistBreederSnapshot,
+    accessControlLoaded,
+    accessControl.nonAdminAccessEnabled,
+    isAdmin,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
     const dbInstance = db;
 
     const verifyAdminAccess = async () => {
+      if (!cancelled) {
+        setAdminCheckComplete(false);
+      }
+
       if (!user) {
         if (!cancelled) {
           setIsAdmin(false);
+          setAdminCheckComplete(true);
         }
         return;
       }
@@ -295,6 +365,7 @@ function App() {
       if (!dbInstance) {
         if (!cancelled) {
           setIsAdmin(false);
+          setAdminCheckComplete(true);
         }
         return;
       }
@@ -308,6 +379,10 @@ function App() {
         console.error("Failed to verify admin access:", error);
         if (!cancelled) {
           setIsAdmin(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setAdminCheckComplete(true);
         }
       }
     };
@@ -836,7 +911,19 @@ function App() {
     }
   };
 
-  if (loading || (user && !progressLoaded)) {
+  const accessBlocked =
+    !!user &&
+    accessControlLoaded &&
+    adminCheckComplete &&
+    !accessControl.nonAdminAccessEnabled &&
+    !isAdmin;
+
+  const shouldShowLoading =
+    loading ||
+    (user &&
+      (!progressLoaded || !accessControlLoaded || !adminCheckComplete));
+
+  if (shouldShowLoading) {
     return (
       <div className="loading-screen">
         <div className="loading-spinner"></div>
@@ -849,6 +936,57 @@ function App() {
     return (
       <div className="App">
         <Auth onAuthSuccess={handleAuthSuccess} />
+      </div>
+    );
+  }
+
+  if (accessBlocked) {
+    const updatedLabel = accessControl.updatedAt
+      ? new Date(accessControl.updatedAt).toLocaleString()
+      : null;
+
+    return (
+      <div className="loading-screen">
+        <h2 style={{ marginBottom: 6 }}>Access temporarily disabled</h2>
+        <p
+          style={{
+            color: "#4B5563",
+            textAlign: "center",
+            maxWidth: 460,
+            marginTop: 6,
+          }}
+        >
+          Non-admin reads and writes are currently turned off by an admin.
+          Please try again later.
+        </p>
+        {updatedLabel ? (
+          <p
+            style={{
+              color: "#6B7280",
+              fontSize: 14,
+              marginTop: 8,
+              textAlign: "center",
+            }}
+          >
+            Last updated {updatedLabel}
+            {accessControl.updatedBy ? ` by ${accessControl.updatedBy}` : ""}
+          </p>
+        ) : null}
+        <button
+          onClick={handleLogout}
+          style={{
+            marginTop: 18,
+            padding: "12px 18px",
+            borderRadius: 12,
+            border: "none",
+            background: "#0F172A",
+            color: "#fff",
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          Logout
+        </button>
       </div>
     );
   }
