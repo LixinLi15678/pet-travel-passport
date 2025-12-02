@@ -167,7 +167,7 @@ function App() {
     );
 
     return () => unsubscribe();
-  }, [db]);
+  }, []);
 
   useEffect(() => {
     const syncProfile = async () => {
