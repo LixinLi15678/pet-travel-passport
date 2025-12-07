@@ -12,18 +12,23 @@ interface ReviewProps {
   petProfiles: PetProfile[];
   activePetId: string | null;
   allFiles: FileInfo[];
-  onUpdatePetFlightInfo: (petId: string, flightInfo: PetFlightInfo) => Promise<void>;
+  onUpdatePetFlightInfo: (
+    petId: string,
+    flightInfo: PetFlightInfo
+  ) => Promise<void>;
   onBack: () => void;
   onLogout: () => void;
   onNext: () => void;
   onPetChange: (petId: string) => void;
-  onAddPet: (pet: { name: string; type: "cat" | "dog" }) => Promise<string | null>;
+  onAddPet: (pet: {
+    name: string;
+    type: "cat" | "dog";
+  }) => Promise<string | null>;
   onDeletePet: (petId: string) => Promise<void>;
   onUpdatePetType: (petId: string, type: "cat" | "dog") => Promise<void>;
   isAdmin?: boolean;
 }
-
-
+const complianceIconSrc = `${process.env.PUBLIC_URL}/assets/icons/review-check-pink.svg`;
 const Review: React.FC<ReviewProps> = (props) => {
   const {
     onUpdatePetFlightInfo,
@@ -121,7 +126,11 @@ const Review: React.FC<ReviewProps> = (props) => {
                 className="account-icon-button"
                 onClick={() => setShowAccountPopup(!showAccountPopup)}
               >
-                <img src={accountIconSrc} alt="Account" className="account-icon" />
+                <img
+                  src={accountIconSrc}
+                  alt="Account"
+                  className="account-icon"
+                />
               </button>
               {showAccountPopup && (
                 <div
@@ -210,9 +219,19 @@ const Review: React.FC<ReviewProps> = (props) => {
       <main className="page-main">
         <div className="content-card review-card">
           {/* Title */}
-          <div className="section-header">
-            <h2 className="section-title">Compliance Check</h2>
-            <p className="section-subtitle">All requirements verified</p>
+          <div className="section-header section-header-with-icon">
+            <div className="review-summary-icon">
+              <img
+                src={complianceIconSrc}
+                alt="Compliance Icon"
+                className="review-icon-img"
+              />
+            </div>
+
+            <div>
+              <h2 className="section-title">Compliance Check</h2>
+              <p className="section-subtitle">All requirements verified</p>
+            </div>
           </div>
 
           <div className="review-check-grid">
@@ -255,15 +274,21 @@ const Review: React.FC<ReviewProps> = (props) => {
               <div className="review-flight-box">
                 <div className="review-flight-row">
                   <span className="review-flight-label">PNR</span>
-                  <span className="review-flight-value">{activePetFlightInfo?.pnr || "—"}</span>
+                  <span className="review-flight-value">
+                    {activePetFlightInfo?.pnr || "—"}
+                  </span>
                 </div>
                 <div className="review-flight-row">
                   <span className="review-flight-label">Flight Number</span>
-                  <span className="review-flight-value">{activePetFlightInfo?.flightNumber || "—"}</span>
+                  <span className="review-flight-value">
+                    {activePetFlightInfo?.flightNumber || "—"}
+                  </span>
                 </div>
                 <div className="review-flight-row">
                   <span className="review-flight-label">Departure Date</span>
-                  <span className="review-flight-value">{activePetFlightInfo?.departureDate || "—"}</span>
+                  <span className="review-flight-value">
+                    {activePetFlightInfo?.departureDate || "—"}
+                  </span>
                 </div>
               </div>
             ) : (
