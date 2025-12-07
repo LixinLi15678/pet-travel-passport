@@ -57,8 +57,9 @@
   padding: 18px 28px;
 
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly;
   align-items: center;
+  gap: 24px;
 
   margin-bottom: 26px;
 }
@@ -67,6 +68,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: 90px;
 }
 
 .flight-label {
@@ -122,22 +124,27 @@
   gap: 14px;
 }
 
-.review-icon-pink {
+.review-summary-icon {
   width: 49px;
   height: 49px;
-  background: linear-gradient(315deg, rgba(230, 62, 111, 0.78) 0%, rgba(255, 107, 157, 0.78) 100%);
+  background: linear-gradient(
+    315deg,
+    rgba(230, 62, 111, 0.75) 0%,
+    rgba(255, 107, 157, 0.75) 100%
+  );
   border-radius: 13px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  box-shadow: 0 8px 18px rgba(230, 62, 111, 0.22);
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.review-icon-pink img {
+.review-summary-icon img {
   width: 28px;
   height: 28px;
-  filter: brightness(0) invert(1);
 }
+
+
 
 .review-title {
   font-size: 20px;
@@ -319,7 +326,7 @@
   font-weight: 700;
   font-size: 15px;
   border: none;
-  border-radius: 30px;     /* pill shape */
+  border-radius: 30px; /* pill shape */
   cursor: pointer;
   display: inline-block;
   margin-left: auto;
@@ -338,8 +345,12 @@
   transform: scale(0.97);
 }
 
-
-
+.pdf-page-1,
+.pdf-page-2 {
+  padding: 0;
+  margin: 0 auto;
+  width: 100%;
+}
 
 /* ============================================================
    MOBILE
@@ -375,5 +386,4 @@
     width: 42px;
     height: 42px;
   }
-
 }
