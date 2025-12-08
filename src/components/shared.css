@@ -49,6 +49,15 @@
   line-height: 1.2;
 }
 
+.page-title.clickable {
+  cursor: pointer;
+}
+
+.page-title.clickable:focus {
+  outline: 2px solid #D1D5DB;
+  outline-offset: 2px;
+}
+
 .page-subtitle {
   font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-weight: 400;

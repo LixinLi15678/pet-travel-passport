@@ -26,6 +26,7 @@ interface ReviewProps {
   }) => Promise<string | null>;
   onDeletePet: (petId: string) => Promise<void>;
   onUpdatePetType: (petId: string, type: "cat" | "dog") => Promise<void>;
+  onGoHome: () => void;
   isAdmin?: boolean;
 }
 const complianceIconSrc = `${process.env.PUBLIC_URL}/assets/icons/review-check-pink.svg`;
@@ -43,6 +44,7 @@ const Review: React.FC<ReviewProps> = (props) => {
     onAddPet,
     onDeletePet,
     onUpdatePetType,
+    onGoHome,
     isAdmin,
   } = props;
   const [editing, setEditing] = useState(false);
@@ -75,6 +77,17 @@ const Review: React.FC<ReviewProps> = (props) => {
     setFlightNumber(activePetFlightInfo?.flightNumber || "");
     setDepartureDate(activePetFlightInfo?.departureDate || "");
   }, [activePetId, activePetFlightInfo]);
+
+  const handleTitleClick = () => {
+    onGoHome?.();
+  };
+
+  const handleTitleKeyDown = (event: React.KeyboardEvent<HTMLHeadingElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onGoHome?.();
+    }
+  };
 
   const normalizePnr = (value: string) =>
     value.trim().toUpperCase().replace(/\s+/g, "");
@@ -144,7 +157,15 @@ const Review: React.FC<ReviewProps> = (props) => {
       <div className="page-header">
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Passport</h1>
+            <h1
+              className="page-title clickable"
+              role="button"
+              tabIndex={0}
+              onClick={handleTitleClick}
+              onKeyDown={handleTitleKeyDown}
+            >
+              Pet Passport
+            </h1>
             <p className="page-subtitle">Final Review</p>
           </div>
           {user && (

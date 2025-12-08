@@ -30,6 +30,7 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
   onDeletePet,
   onUpdatePetType,
   allFiles = [],
+  onGoHome,
   isAdmin = false
 }) => {
   const [vaccineFiles, setVaccineFiles] = useState<FileInfo[]>(initialFiles);
@@ -61,6 +62,16 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
   const activePetProfile = activePet ? petProfiles.find((pet) => pet.id === activePet) : null;
   const activePetType = activePetProfile?.type === 'dog' ? 'dog' : 'cat';
   const accountIconSrc = `${process.env.PUBLIC_URL}/assets/icons/${activePetType === 'dog' ? 'dog-login.svg' : 'cat-login.svg'}`;
+  const handleTitleClick = () => {
+    if (onGoHome) onGoHome();
+  };
+
+  const handleTitleKeyDown = (event: React.KeyboardEvent<HTMLHeadingElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (onGoHome) onGoHome();
+    }
+  };
 
   const updateFiles = useCallback(
     (updater: FileInfo[] | ((prev: FileInfo[]) => FileInfo[])) => {
@@ -543,7 +554,15 @@ const VaccineEnhanced: React.FC<VaccineProps> = ({
       <div className="page-header">
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Passport</h1>
+            <h1
+              className="page-title clickable"
+              role="button"
+              tabIndex={0}
+              onClick={handleTitleClick}
+              onKeyDown={handleTitleKeyDown}
+            >
+              Pet Passport
+            </h1>
             <p className="page-subtitle">Vaccine verification</p>
           </div>
           {user && (

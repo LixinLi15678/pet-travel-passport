@@ -13,6 +13,7 @@ const MainPage: React.FC<MainPageProps> = ({
   onLogout,
   showLoginTip,
   onDismissLoginTip,
+  onGoHome,
   onBeginSetup,
   petProfiles = [],
   activePetId,
@@ -78,6 +79,17 @@ const MainPage: React.FC<MainPageProps> = ({
     openAdminConsole();
   };
 
+  const handleTitleClick = () => {
+    onGoHome?.();
+  };
+
+  const handleTitleKeyDown = (event: React.KeyboardEvent<HTMLHeadingElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onGoHome?.();
+    }
+  };
+
   const handleHelpClick = () => {
     alert('Contact us by email at support@petpassport.com');
   };
@@ -88,7 +100,15 @@ const MainPage: React.FC<MainPageProps> = ({
         {/* Header Section */}
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Passport</h1>
+            <h1
+              className="page-title clickable"
+              role="button"
+              tabIndex={0}
+              onClick={handleTitleClick}
+              onKeyDown={handleTitleKeyDown}
+            >
+              Pet Passport
+            </h1>
             <p className="page-subtitle">Verified check-in in 4 steps</p>
           </div>
             {user && (
@@ -185,7 +205,7 @@ const MainPage: React.FC<MainPageProps> = ({
           <div className="login-tip-modal">
             <h2>Welcome!</h2>
             <p>
-              To log out, tap the <span className="highlight-text">{petIconLabel}</span> in the top right, then choose logout from the menu.
+              To log out, tap the <span className="highlight-text">{petIconLabel}</span> in the top right, then choose logout from the menu. Tap <span className="highlight-text">Pet Passport</span> in the header anytime to return to the home screen.
             </p>
             <div className="tip-checkbox">
               <input

@@ -86,6 +86,7 @@ export interface MainPageProps {
   onLogout: () => void;
   showLoginTip: boolean;
   onDismissLoginTip: (dontShowAgain: boolean) => void;
+  onGoHome: () => void;
   onBeginSetup: () => void;
   petProfiles: PetProfile[];
   activePetId: string | null;
@@ -110,6 +111,7 @@ export interface MeasureProps {
   onUpdatePetType: (petId: string, type: 'cat' | 'dog') => Promise<void>;
   allFiles: FileInfo[];
   onDimensionsUpdate: (petId: string, dimensions: PetDimensions) => void;
+  onGoHome: () => void;
   isAdmin?: boolean;
 }
 
@@ -127,6 +129,7 @@ export interface VaccineProps {
   onDeletePet: (petId: string) => Promise<void>;
   onUpdatePetType: (petId: string, type: 'cat' | 'dog') => Promise<void>;
   allFiles: FileInfo[];
+  onGoHome: () => void;
   isAdmin?: boolean;
 }
 

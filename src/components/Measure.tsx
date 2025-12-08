@@ -27,6 +27,7 @@ const Measure: React.FC<MeasureProps> = ({
   onUpdatePetType,
   allFiles = [],
   onDimensionsUpdate = () => {},
+  onGoHome,
   isAdmin = false
 }) => {
   const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
@@ -207,13 +208,32 @@ const Measure: React.FC<MeasureProps> = ({
     }
   };
 
+  const handleTitleClick = () => {
+    if (onGoHome) onGoHome();
+  };
+
+  const handleTitleKeyDown = (event: React.KeyboardEvent<HTMLHeadingElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (onGoHome) onGoHome();
+    }
+  };
+
   return (
     <div className="page-background">
       {/* Header Section */}
       <div className="page-header">
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Passport</h1>
+            <h1
+              className="page-title clickable"
+              role="button"
+              tabIndex={0}
+              onClick={handleTitleClick}
+              onKeyDown={handleTitleKeyDown}
+            >
+              Pet Passport
+            </h1>
             <p className="page-subtitle">Measure carrier dimensions</p>
           </div>
           {user && (

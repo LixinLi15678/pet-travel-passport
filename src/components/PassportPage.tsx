@@ -143,6 +143,17 @@ const PassportPage: React.FC<PassportPageProps> = (props) => {
     setShowAccountPopup(false);
   };
 
+  const handleTitleClick = () => {
+    onHome?.();
+  };
+
+  const handleTitleKeyDown = (event: React.KeyboardEvent<HTMLHeadingElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onHome?.();
+    }
+  };
+
   // QR encoded data - use pet's flight info
   const qrValue = JSON.stringify({
     petId: pet?.id,
@@ -158,7 +169,15 @@ const PassportPage: React.FC<PassportPageProps> = (props) => {
       <div className="page-header">
         <div className="header-content">
           <div className="header-title-section">
-            <h1 className="page-title">Pet Passport</h1>
+            <h1
+              className="page-title clickable"
+              role="button"
+              tabIndex={0}
+              onClick={handleTitleClick}
+              onKeyDown={handleTitleKeyDown}
+            >
+              Pet Passport
+            </h1>
             <p className="page-subtitle">Your pet is ready to fly</p>
           </div>
           {userEmail && (

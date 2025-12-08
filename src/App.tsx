@@ -435,6 +435,11 @@ function App() {
     persistCurrentStep("vaccine");
   };
 
+  const goHome = useCallback(() => {
+    setCurrentPage("main");
+    persistCurrentStep("main");
+  }, [persistCurrentStep]);
+
   const handleMeasureBack = () => {
     setCurrentPage("main");
     persistCurrentStep("main");
@@ -811,6 +816,8 @@ function App() {
       setPetProfiles(updatedPets);
       setActivePetId(newPetId);
       setInitialVaccineFiles([]);
+      setCurrentPage("main");
+      persistCurrentStep("main");
 
       persistBreederSnapshot(updatedPets, allFiles);
 
@@ -819,7 +826,7 @@ function App() {
           await userProgressService.saveProgress(user.uid, {
             pets: updatedPets,
             activePetId: newPetId,
-            currentStep: normalizeStep(currentPage),
+            currentStep: "main",
             lastFileIds: [],
             lastFileCount: 0,
           });
@@ -999,6 +1006,7 @@ function App() {
           onLogout={handleLogout}
           showLoginTip={showLoginTip}
           onDismissLoginTip={handleDismissLoginTip}
+          onGoHome={goHome}
           onBeginSetup={handleBeginSetup}
           petProfiles={petProfiles}
           activePetId={activePetId}
@@ -1023,6 +1031,7 @@ function App() {
           onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
           onDimensionsUpdate={handleDimensionsUpdate}
+          onGoHome={goHome}
           isAdmin={isAdmin}
         />
       ) : currentPage === "weight-carrier" ? (
@@ -1039,6 +1048,7 @@ function App() {
           onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
           isAdmin={isAdmin}
+          onGoHome={goHome}
           savedCarrierWeight={
             activePetId ? weightEntries[activePetId]?.carrier ?? "" : ""
           }
@@ -1060,6 +1070,7 @@ function App() {
           onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
           isAdmin={isAdmin}
+          onGoHome={goHome}
           carrierWeight={
             activePetId ? weightEntries[activePetId]?.carrier ?? "" : ""
           }
@@ -1089,6 +1100,7 @@ function App() {
           onDeletePet={handleDeletePet}
           onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
+          onGoHome={goHome}
           isAdmin={isAdmin}
         />
       ) : currentPage === "review" ? (
@@ -1122,6 +1134,7 @@ function App() {
             setCurrentPage("passport"); // GO TO PASSPORT PAGE
             persistCurrentStep("passport");
           }}
+          onGoHome={goHome}
           onPetChange={handlePetChange}
           onAddPet={handleAddPet}
           onDeletePet={handleDeletePet}
@@ -1144,10 +1157,7 @@ function App() {
             setCurrentPage("review");
             persistCurrentStep("review");
           }}
-          onHome={() => {
-            setCurrentPage("main");
-            persistCurrentStep("main");
-          }}
+          onHome={goHome}
           isAdmin={isAdmin}
         />
       ) : null}
