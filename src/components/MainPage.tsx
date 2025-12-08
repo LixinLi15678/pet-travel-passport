@@ -78,6 +78,10 @@ const MainPage: React.FC<MainPageProps> = ({
     openAdminConsole();
   };
 
+  const handleHelpClick = () => {
+    alert('Contact us by email at support@petpassport.com');
+  };
+
   return (
     <div className="page-background">
       <div className="page-header">
@@ -269,7 +273,7 @@ const MainPage: React.FC<MainPageProps> = ({
         </button>
 
         {/* Help Link */}
-        <button className="help-link">
+        <button className="help-link" onClick={handleHelpClick}>
           Need Help?
         </button>
       </main>

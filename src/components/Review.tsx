@@ -76,9 +76,33 @@ const Review: React.FC<ReviewProps> = (props) => {
     setDepartureDate(activePetFlightInfo?.departureDate || "");
   }, [activePetId, activePetFlightInfo]);
 
+  const normalizePnr = (value: string) =>
+    value.trim().toUpperCase().replace(/\s+/g, "");
+  const normalizeFlightNumber = (value: string) =>
+    value.trim().toUpperCase().replace(/[\s-]+/g, "");
+  const isValidPnr = (value: string) => /^[A-Z0-9]{6}$/.test(value);
+  const isValidFlightNumber = (value: string) =>
+    /^[A-Z]{2,3}\d{1,4}[A-Z]?$/.test(value);
+
   const saveFlightDetails = async () => {
-    if (!pnr || !flightNumber || !departureDate) {
+    const normalizedPnr = normalizePnr(pnr);
+    const normalizedFlightNumber = normalizeFlightNumber(flightNumber);
+    const normalizedDepartureDate = departureDate.trim();
+
+    if (!normalizedPnr || !normalizedFlightNumber || !normalizedDepartureDate) {
       alert("Please fill in all fields.");
+      return;
+    }
+
+    if (!isValidPnr(normalizedPnr)) {
+      alert("Please enter a valid 6-character PNR (letters and numbers only).");
+      return;
+    }
+
+    if (!isValidFlightNumber(normalizedFlightNumber)) {
+      alert(
+        "Please enter a valid flight number (e.g., AA123, ANA4567)."
+      );
       return;
     }
 
@@ -88,11 +112,14 @@ const Review: React.FC<ReviewProps> = (props) => {
     }
 
     await onUpdatePetFlightInfo(activePet, {
-      pnr,
-      flightNumber,
-      departureDate,
+      pnr: normalizedPnr,
+      flightNumber: normalizedFlightNumber,
+      departureDate: normalizedDepartureDate,
     });
 
+    setPnr(normalizedPnr);
+    setFlightNumber(normalizedFlightNumber);
+    setDepartureDate(normalizedDepartureDate);
     setEditing(false);
   };
 

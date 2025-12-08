@@ -1060,6 +1060,9 @@ function App() {
           onUpdatePetType={handleUpdatePetType}
           allFiles={allFiles}
           isAdmin={isAdmin}
+          carrierWeight={
+            activePetId ? weightEntries[activePetId]?.carrier ?? "" : ""
+          }
           savedTotalWeight={
             activePetId ? weightEntries[activePetId]?.total ?? "" : ""
           }

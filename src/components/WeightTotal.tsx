@@ -22,10 +22,17 @@ export interface WeightTotalProps {
   isAdmin?: boolean;
   savedTotalWeight?: string;
   onTotalWeightChange: (value: string) => void;
+  carrierWeight?: string;
 }
 
 const WeightTotal: React.FC<WeightTotalProps> = (props) => {
-  const { onNext, onBack, savedTotalWeight = '', onTotalWeightChange } = props;
+  const {
+    onNext,
+    onBack,
+    savedTotalWeight = '',
+    onTotalWeightChange,
+    carrierWeight = '',
+  } = props;
 
   const [totalWeight, setTotalWeight] = useState<string>(savedTotalWeight || '');
   const [showAccountPopup, setShowAccountPopup] = useState<boolean>(false);
@@ -52,6 +59,15 @@ const WeightTotal: React.FC<WeightTotalProps> = (props) => {
   );
   const MAX_CABIN_WEIGHT = 20;
 
+  const parsedTotalWeight = parseFloat(totalWeight);
+  const parsedCarrierWeight = parseFloat(carrierWeight);
+  const hasCarrierWeight = carrierWeight.trim().length > 0;
+  const carrierWeightValue =
+    hasCarrierWeight && !isNaN(parsedCarrierWeight) ? parsedCarrierWeight : null;
+  const hasTotalWeight = totalWeight.trim().length > 0;
+  const totalWeightValue =
+    hasTotalWeight && !isNaN(parsedTotalWeight) ? parsedTotalWeight : null;
+
   const handleChange = (value: string) => {
     const sanitized = sanitizeDecimalInput(value, 2);
     setTotalWeight(sanitized);
@@ -59,14 +75,27 @@ const WeightTotal: React.FC<WeightTotalProps> = (props) => {
   };
 
   const canContinue = () => {
-    if (!totalWeight) return false;
-    const value = parseFloat(totalWeight);
-    return !isNaN(value) && value > 0;
+    if (!hasCarrierWeight || carrierWeightValue === null) return false;
+    if (totalWeightValue === null || totalWeightValue <= 0) return false;
+    if (totalWeightValue <= carrierWeightValue) return false;
+    return true;
   };
 
   const handleContinue = () => {
-    if (!canContinue()) {
+    if (!hasCarrierWeight) {
+      alert('Please enter your carrier weight before adding the total weight.');
+      return;
+    }
+    if (carrierWeightValue === null) {
+      alert('Please re-enter the carrier weight before continuing.');
+      return;
+    }
+    if (totalWeightValue === null || totalWeightValue <= 0) {
       alert('Please enter a valid total weight.');
+      return;
+    }
+    if (totalWeightValue <= carrierWeightValue) {
+      alert('Total weight must be greater than the carrier weight.');
       return;
     }
     onNext();
@@ -76,11 +105,13 @@ const WeightTotal: React.FC<WeightTotalProps> = (props) => {
     onBack();
   };
 
-  const parsedWeight = parseFloat(totalWeight);
-  const numericWeight = Number.isFinite(parsedWeight) ? parsedWeight : 0;
-  const hasWeight = totalWeight.trim().length > 0;
+  const numericWeight = totalWeightValue ?? 0;
+  const hasWeight = hasTotalWeight;
   const isOverLimit = numericWeight > MAX_CABIN_WEIGHT;
-  const limitPercentage = Math.min(numericWeight / MAX_CABIN_WEIGHT, 1);
+  const limitPercentage = Math.min(
+    totalWeightValue ? totalWeightValue / MAX_CABIN_WEIGHT : 0,
+    1
+  );
   const limitFillWidth = `${limitPercentage * 100}%`;
   const limitStatusClass = hasWeight
     ? isOverLimit
