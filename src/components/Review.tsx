@@ -82,7 +82,7 @@ const Review: React.FC<ReviewProps> = (props) => {
     value.trim().toUpperCase().replace(/[\s-]+/g, "");
   const isValidPnr = (value: string) => /^[A-Z0-9]{6}$/.test(value);
   const isValidFlightNumber = (value: string) =>
-    /^[A-Z]{2,3}\d{1,4}[A-Z]?$/.test(value);
+    value.length <= 6 && /^[A-Z]{2,3}\d{1,4}[A-Z]?$/.test(value);
 
   const saveFlightDetails = async () => {
     const normalizedPnr = normalizePnr(pnr);
@@ -101,7 +101,7 @@ const Review: React.FC<ReviewProps> = (props) => {
 
     if (!isValidFlightNumber(normalizedFlightNumber)) {
       alert(
-        "Please enter a valid flight number (e.g., AA123, ANA4567)."
+        "Please enter a valid flight number up to 6 characters (e.g., AA123, ANA456)."
       );
       return;
     }
@@ -330,6 +330,7 @@ const Review: React.FC<ReviewProps> = (props) => {
                   className="review-input"
                   placeholder="Enter Flight Number"
                   value={flightNumber}
+                  maxLength={6}
                   onChange={(e) => setFlightNumber(e.target.value)}
                 />
                 <input
