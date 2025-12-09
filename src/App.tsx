@@ -837,7 +837,13 @@ function App() {
 
       return newPetId;
     },
-    [allFiles, currentPage, petProfiles, persistBreederSnapshot, user]
+    [
+      allFiles,
+      petProfiles,
+      persistBreederSnapshot,
+      persistCurrentStep,
+      user,
+    ]
   );
 
   const handleUpdatePetType = useCallback(
